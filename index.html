@@ -25,12 +25,21 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC'
 .search-btn:hover { background: #1557b0; }
 .search-btn.clear { background: #f5f5f5; color: #666; }
 .search-btn.clear:hover { background: #e0e0e0; }
+.search-hint { font-size: 12px; color: #888; margin-top: 8px; }
+.export-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+.export-btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
+.export-btn.query { background: #52c41a; color: white; }
+.export-btn.query:hover { background: #389e0d; }
+.export-btn.all { background: #722ed1; color: white; }
+.export-btn.all:hover { background: #531dab; }
+.export-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .stats { display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
 .stat-card { background: white; border-radius: 10px; padding: 16px 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); flex: 1; min-width: 140px; }
 .stat-card .label { font-size: 13px; color: #888; margin-bottom: 4px; }
 .stat-card .value { font-size: 22px; font-weight: 700; color: #1a73e8; }
 .results { background: white; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); overflow: hidden; }
-.results-header { padding: 16px 20px; border-bottom: 1px solid #f0f0f0; font-size: 15px; color: #666; }
+.results-header { padding: 16px 20px; border-bottom: 1px solid #f0f0f0; font-size: 15px; color: #666; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+.results-header .badge { background: #e6f7ff; color: #1a73e8; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 500; }
 .result-item { padding: 20px; border-bottom: 1px solid #f5f5f5; transition: background 0.15s; }
 .result-item:hover { background: #fafbff; }
 .result-item:last-child { border-bottom: none; }
@@ -59,6 +68,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC'
 .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
 .empty-state p { font-size: 15px; }
 .footer { text-align: center; padding: 20px; color: #aaa; font-size: 13px; }
+.user-badge { position: absolute; top: 20px; left: 20px; background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 12px; border: 1px solid rgba(255,255,255,0.4); }
 @media (max-width: 600px) {
   .header { padding: 18px 0; }
   .header h1 { font-size: 20px; }
@@ -70,6 +80,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC'
   .search-btn { width: 100%; padding: 14px 28px; font-size: 16px; }
   .search-btn.clear { background: #f5f5f5; color: #666; }
   .search-btn.clear:hover { background: #e0e0e0; }
+  .export-bar { flex-direction: column; }
+  .export-btn { width: 100%; justify-content: center; }
   .stats { flex-direction: column; gap: 10px; }
   .stat-card { padding: 14px 16px; }
   .stat-card .value { font-size: 20px; }
@@ -86,6 +98,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC'
   .empty-state { padding: 40px 20px; }
   .empty-state .icon { font-size: 40px; }
   .footer { padding: 16px; font-size: 12px; }
+  .user-badge { position: static; margin-bottom: 10px; display: inline-block; }
 }
 </style>
 </head>
@@ -94,8 +107,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC'
 <div class="header">
   <h1>保单查询系统</h1>
   <p>输入车牌号或车架号，快速查询交强险与商业险信息</p>
+  <div class="user-badge" id="userBadge"></div>
   <div style="position:absolute;top:20px;right:20px;display:flex;gap:10px;">
-    <button onclick="goToAdmin()" style="padding:6px 16px;background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.4);border-radius:6px;cursor:pointer;font-size:13px;">访问管理</button>
+    <button onclick="goToAdmin()" id="adminBtn" style="padding:6px 16px;background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.4);border-radius:6px;cursor:pointer;font-size:13px;display:none;">访问管理</button>
     <button onclick="logout()" style="padding:6px 16px;background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.4);border-radius:6px;cursor:pointer;font-size:13px;">退出登录</button>
   </div>
 </div>
@@ -103,10 +117,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC'
 <div class="container">
   <div class="search-box">
     <div class="search-row">
-      <input type="text" class="search-input" id="searchInput" placeholder="输入车牌号（如 粤BPA1958）或车架号（如 HEV11CD17TF230327）" autofocus>
+      <input type="text" class="search-input" id="searchInput" placeholder="支持多车查询，用逗号、空格或换行分隔" autofocus>
       <button class="search-btn" onclick="doSearch()">查询</button>
       <button class="search-btn clear" onclick="clearSearch()">清空</button>
     </div>
+    <div class="search-hint" id="searchHint">💡 支持多车查询：用逗号、空格或换行分隔多个车牌号/车架号</div>
+  </div>
+
+  <div class="export-bar" id="exportBar" style="display:none;">
+    <button class="export-btn query" onclick="exportQueryResults()">📊 导出查询结果</button>
+    <button class="export-btn all" id="exportAllBtn" onclick="exportAllData()" style="display:none;">📦 导出所有数据</button>
   </div>
 
   <div class="stats" id="statsBar" style="display:none">
@@ -135,6 +155,25 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC'
 <div class="footer">保单查询系统 · 数据来源于保单导出文件</div>
 
 <script>
+// 当前用户信息
+const currentUser = sessionStorage.getItem('username');
+const isAdmin = currentUser === 'zhangdp';
+const MAX_QUERY_COUNT = isAdmin ? Infinity : 3;
+
+// 显示用户信息
+document.getElementById('userBadge').textContent = `👤 ${currentUser}${isAdmin ? ' (管理员)' : ''}`;
+
+// 显示管理员按钮
+if (isAdmin) {
+  document.getElementById('adminBtn').style.display = 'block';
+  document.getElementById('exportAllBtn').style.display = 'flex';
+}
+
+// 更新搜索提示
+if (!isAdmin) {
+  document.getElementById('searchHint').textContent = `💡 支持多车查询（最多3台），用逗号、空格或换行分隔`;
+}
+
 // 退出登录
 function logout() {
   sessionStorage.clear();
@@ -143,23 +182,23 @@ function logout() {
 
 // 跳转到访问管理页面（仅限专属账号）
 function goToAdmin() {
-  const currentUser = sessionStorage.getItem('username');
-  if (currentUser === 'zhangdp') {
+  if (isAdmin) {
     window.location.href = 'admin.html';
   } else {
-    alert('您没有权限访问此页面\n\n当前登录账号：' + currentUser + '\n\n此功能仅限专属账号使用');
+    alert('您没有权限访问此页面\n\n当前登录账号：' + currentUser + '\n\n此功能仅限管理员使用');
   }
 }
 
 let POLICY_DATA = [];
 let allVehicles = [];
 let dataLoaded = false;
+let lastQueryResults = []; // 保存最近一次查询结果
 
 // 搜索频率限制
 const SEARCH_LIMIT = {
-  maxSearches: 20,      // 每分钟最大搜索次数
-  windowMs: 60 * 1000,  // 1 分钟窗口
-  cooldownMs: 30 * 1000 // 超限后冷却 30 秒
+  maxSearches: 20,
+  windowMs: 60 * 1000,
+  cooldownMs: 30 * 1000
 };
 let searchTimestamps = [];
 let searchCooldownUntil = 0;
@@ -167,22 +206,18 @@ let searchCooldownUntil = 0;
 function checkSearchLimit() {
   const now = Date.now();
   
-  // 检查冷却期
   if (now < searchCooldownUntil) {
     const remaining = Math.ceil((searchCooldownUntil - now) / 1000);
     return { allowed: false, message: `搜索过于频繁，请 ${remaining} 秒后重试` };
   }
   
-  // 清理过期记录
   searchTimestamps = searchTimestamps.filter(t => now - t < SEARCH_LIMIT.windowMs);
   
-  // 检查是否超限
   if (searchTimestamps.length >= SEARCH_LIMIT.maxSearches) {
     searchCooldownUntil = now + SEARCH_LIMIT.cooldownMs;
     return { allowed: false, message: `搜索过于频繁，请 ${SEARCH_LIMIT.cooldownMs / 1000} 秒后重试` };
   }
   
-  // 记录本次搜索
   searchTimestamps.push(now);
   return { allowed: true };
 }
@@ -194,7 +229,6 @@ async function loadData() {
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     POLICY_DATA = await resp.json();
     
-    // 按VIN分组
     const groups = {};
     POLICY_DATA.forEach(p => {
       if (!groups[p.vin]) {
@@ -204,7 +238,6 @@ async function loadData() {
     });
     allVehicles = Object.values(groups);
     
-    // 更新统计
     document.getElementById('statVehicles').textContent = allVehicles.length;
     document.getElementById('statPolicies').textContent = POLICY_DATA.length;
     
@@ -237,55 +270,104 @@ function getStatusClass(endDateStr) {
   return '';
 }
 
+// 解析多车查询输入
+function parseQueryInput(input) {
+  // 用逗号、空格、换行、制表符分隔
+  return input
+    .split(/[,，\s\n\r\t]+/)
+    .map(s => s.trim().toUpperCase())
+    .filter(s => s.length > 0);
+}
+
 function doSearch() {
   if (!dataLoaded) {
     alert('数据正在加载，请稍后再试');
     return;
   }
   
-  // 检查搜索频率限制
   const limitCheck = checkSearchLimit();
   if (!limitCheck.allowed) {
     alert(limitCheck.message);
     return;
   }
   
-  const query = document.getElementById('searchInput').value.trim().toUpperCase();
-  if (!query) {
+  const rawInput = document.getElementById('searchInput').value.trim();
+  if (!rawInput) {
     showEmpty();
     return;
   }
 
-  // 精确匹配
-  const results = allVehicles.filter(v =>
-    v.plate.toUpperCase() === query || v.vin.toUpperCase() === query
-  );
-
-  if (results.length === 0) {
-    document.getElementById('resultsArea').innerHTML = 
-      '<div class="empty-state"><div class="icon">😕</div><p>未找到匹配的保单信息，请确认车牌号或车架号是否正确</p></div>';
+  // 解析多个查询
+  const queries = parseQueryInput(rawInput);
+  
+  if (queries.length === 0) {
+    showEmpty();
+    return;
+  }
+  
+  // 检查查询数量限制
+  if (queries.length > MAX_QUERY_COUNT) {
+    alert(`查询数量超限\n\n当前输入：${queries.length} 台车\n允许上限：${MAX_QUERY_COUNT} 台车\n\n请减少查询数量后重试`);
     return;
   }
 
-  renderResults(results);
+  // 精确匹配
+  const results = [];
+  const notFound = [];
+  
+  queries.forEach(query => {
+    const matched = allVehicles.filter(v =>
+      v.plate.toUpperCase() === query || v.vin.toUpperCase() === query
+    );
+    
+    if (matched.length > 0) {
+      results.push(...matched);
+    } else {
+      notFound.push(query);
+    }
+  });
+
+  if (results.length === 0) {
+    let msg = '未找到匹配的保单信息';
+    if (notFound.length > 0) {
+      msg += `\n\n未找到的车牌/车架号：\n${notFound.join('\n')}`;
+    }
+    document.getElementById('resultsArea').innerHTML = 
+      `<div class="empty-state"><div class="icon">😕</div><p>${msg.replace(/\n/g, '<br>')}</p></div>`;
+    document.getElementById('exportBar').style.display = 'none';
+    return;
+  }
+
+  lastQueryResults = results;
+  renderResults(results, notFound);
+  document.getElementById('exportBar').style.display = 'flex';
 }
 
 function clearSearch() {
   document.getElementById('searchInput').value = '';
   showEmpty();
+  document.getElementById('exportBar').style.display = 'none';
+  lastQueryResults = [];
 }
 
 function showEmpty() {
   document.getElementById('resultsArea').innerHTML = 
     '<div class="empty-state"><div class="icon">🔍</div><p>请输入车牌号或车架号查询保单信息</p></div>';
+  document.getElementById('exportBar').style.display = 'none';
+  lastQueryResults = [];
 }
 
-function renderResults(results) {
+function renderResults(results, notFound = []) {
   const area = document.getElementById('resultsArea');
   const today = new Date();
   const thirtyDaysLater = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
 
-  let html = `<div class="results-header">找到 ${results.length} 辆车，共 ${results.reduce((s, v) => s + v.policies.length, 0)} 份保单</div>`;
+  let headerHtml = `<div class="results-header">`;
+  headerHtml += `<span>找到 ${results.length} 辆车，共 ${results.reduce((s, v) => s + v.policies.length, 0)} 份保单</span>`;
+  headerHtml += `<span class="badge">${isAdmin ? '管理员模式' : `普通模式（最多${MAX_QUERY_COUNT}台）`}</span>`;
+  headerHtml += `</div>`;
+
+  let html = headerHtml;
 
   results.forEach(v => {
     html += `<div class="result-item">`;
@@ -301,9 +383,8 @@ function renderResults(results) {
       const endStatus = getStatusClass(p.end);
       const endLabel = endStatus === 'expired' ? '已到期' : endStatus === 'expiring' ? '即将到期' : '';
       const company = p.company || '合众财产保险股份有限公司广东分公司';
-      const phone = '400-609-5555'; // 合众财险客服电话
+      const phone = '400-609-5555';
       
-      // 生成备用下载链接（ghfast.top 镜像）
       const rawPath = p.file.replace('https://cdn.jsdelivr.net/gh/userwe123/policy-query@main/', '');
       const mirrorUrl = `https://ghfast.top/https://raw.githubusercontent.com/userwe123/policy-query/main/${rawPath}`;
 
@@ -325,7 +406,63 @@ function renderResults(results) {
     html += `</div></div>`;
   });
 
+  // 显示未找到的车牌
+  if (notFound.length > 0) {
+    html += `<div class="result-item" style="background:#fff7e6;">`;
+    html += `<div style="color:#fa8c16;font-weight:500;margin-bottom:8px;">⚠️ 以下车牌/车架号未找到：</div>`;
+    html += `<div style="color:#666;font-size:13px;">${notFound.join('、')}</div>`;
+    html += `</div>`;
+  }
+
   area.innerHTML = html;
+}
+
+// 导出查询结果
+function exportQueryResults() {
+  if (lastQueryResults.length === 0) {
+    alert('没有可导出的查询结果');
+    return;
+  }
+  
+  exportToCSV(lastQueryResults, `查询结果_${new Date().toISOString().split('T')[0]}`);
+}
+
+// 导出所有数据（仅管理员）
+function exportAllData() {
+  if (!isAdmin) {
+    alert('您没有权限执行此操作');
+    return;
+  }
+  
+  if (!confirm(`确定要导出系统中所有车辆保单数据吗？\n\n共 ${allVehicles.length} 辆车，${POLICY_DATA.length} 份保单`)) {
+    return;
+  }
+  
+  exportToCSV(allVehicles, `所有车辆保单数据_${new Date().toISOString().split('T')[0]}`);
+}
+
+// 通用导出函数
+function exportToCSV(vehicles, filename) {
+  let csv = '车牌号,车架号,保单类型,保单号,起保日期,到期日期,保险公司,客服电话\n';
+  
+  vehicles.forEach(v => {
+    v.policies.forEach(p => {
+      const company = p.company || '合众财产保险股份有限公司广东分公司';
+      const phone = '400-609-5555';
+      csv += `"${v.plate}","${v.vin}","${p.type}","${p.policy_no}","${p.start}","${p.end}","${company}","${phone}"\n`;
+    });
+  });
+  
+  // 添加 BOM 以支持中文
+  const bom = '\uFEFF';
+  const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `${filename}.csv`;
+  link.click();
+  
+  // 记录导出日志
+  console.log(`导出成功：${filename}.csv，共 ${vehicles.length} 辆车`);
 }
 
 // Enter key search
