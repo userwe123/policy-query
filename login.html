@@ -58,6 +58,66 @@ body {
 .form-group input:focus {
   border-color: #667eea;
 }
+
+/* 蜜罐字段 - 隐藏但可被 Bot 填充 */
+.honey-pot {
+  position: absolute;
+  left: -9999px;
+  opacity: 0;
+  height: 0;
+  width: 0;
+  overflow: hidden;
+}
+
+/* 验证码区域 */
+.captcha-group {
+  display: none;
+  background: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+.captcha-group.show {
+  display: block;
+}
+.captcha-question {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  text-align: center;
+  margin-bottom: 12px;
+  padding: 8px;
+  background: white;
+  border-radius: 6px;
+  border: 1px dashed #ccc;
+}
+.captcha-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.captcha-row input {
+  flex: 1;
+}
+.captcha-refresh {
+  padding: 10px 14px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.captcha-refresh:hover {
+  background: #5568d3;
+}
+.captcha-refresh:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
 .login-btn {
   width: 100%;
   padding: 14px;
@@ -77,6 +137,11 @@ body {
 .login-btn:active {
   transform: translateY(0);
 }
+.login-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
 .error-msg {
   color: #f5222d;
   font-size: 14px;
@@ -84,11 +149,30 @@ body {
   margin-top: 16px;
   display: none;
 }
+.error-msg.show {
+  display: block;
+}
+.fail-hint {
+  color: #fa8c16;
+  font-size: 13px;
+  text-align: center;
+  margin-top: 8px;
+  display: none;
+}
+.fail-hint.show {
+  display: block;
+}
 .footer {
   text-align: center;
   margin-top: 24px;
   font-size: 13px;
   color: #aaa;
+}
+.security-badge {
+  text-align: center;
+  margin-top: 12px;
+  font-size: 12px;
+  color: #52c41a;
 }
 </style>
 </head>
@@ -99,76 +183,187 @@ body {
     <p>请输入账号密码登录</p>
   </div>
   
-  <form id="loginForm">
+  <form id="loginForm" autocomplete="off">
+    <!-- 蜜罐字段：正常用户看不到，Bot 会填充 -->
+    <div class="honey-pot" aria-hidden="true">
+      <label for="website">Website</label>
+      <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+    </div>
+    
     <div class="form-group">
       <label for="username">账号</label>
-      <input type="text" id="username" placeholder="请输入账号" required>
+      <input type="text" id="username" placeholder="请输入账号" required autocomplete="off">
     </div>
     
     <div class="form-group">
       <label for="password">密码</label>
-      <input type="password" id="password" placeholder="请输入密码" required>
+      <input type="password" id="password" placeholder="请输入密码" required autocomplete="off">
     </div>
     
-    <button type="submit" class="login-btn">登录</button>
+    <!-- 验证码区域（失败 3 次后显示） -->
+    <div class="captcha-group" id="captchaGroup">
+      <label style="font-size:13px;color:#888;margin-bottom:8px;display:block;">安全验证</label>
+      <div class="captcha-question" id="captchaQuestion">点击右侧按钮获取题目</div>
+      <div class="captcha-row">
+        <input type="text" id="captchaAnswer" placeholder="请输入答案" autocomplete="off">
+        <button type="button" class="captcha-refresh" id="captchaBtn" onclick="loadCaptcha()">获取题目</button>
+      </div>
+    </div>
     
-    <div class="error-msg" id="errorMsg">账号或密码错误</div>
+    <button type="submit" class="login-btn" id="loginBtn">登录</button>
+    
+    <div class="fail-hint" id="failHint"></div>
+    <div class="error-msg" id="errorMsg"></div>
   </form>
   
+  <div class="security-badge">🔒 已启用安全防护</div>
   <div class="footer">
     保单查询系统 · 内部使用
   </div>
 </div>
 
 <script>
-// 账号密码配置（可以添加多个）
-const USERS = {
-  'zhangdp': 'Aa123456',
-  'admin': 'admin888',
-  'test': 'test123'
-};
-
-// 日志记录 API
 const LOG_API_URL = '/api';
+let captchaId = null;
+let failCount = 0;
+let isLoading = false;
 
+// 显示错误消息
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 5000);
+}
+
+// 显示失败提示
+function showFailHint(msg) {
+  const el = document.getElementById('failHint');
+  el.textContent = msg;
+  el.classList.add('show');
+}
+
+function hideFailHint() {
+  document.getElementById('failHint').classList.remove('show');
+}
+
+// 加载验证码
+async function loadCaptcha() {
+  const btn = document.getElementById('captchaBtn');
+  const questionEl = document.getElementById('captchaQuestion');
+  
+  btn.disabled = true;
+  btn.textContent = '加载中...';
+  questionEl.textContent = '正在生成题目...';
+  
+  try {
+    const resp = await fetch(LOG_API_URL + '/captcha', { method: 'POST' });
+    const data = await resp.json();
+    
+    if (data.success) {
+      captchaId = data.captchaId;
+      questionEl.textContent = data.question;
+      document.getElementById('captchaAnswer').value = '';
+      document.getElementById('captchaAnswer').focus();
+    } else {
+      questionEl.textContent = '生成失败，请重试';
+    }
+  } catch (e) {
+    questionEl.textContent = '网络错误，请重试';
+  }
+  
+  btn.disabled = false;
+  btn.textContent = '换一题';
+}
+
+// 显示验证码区域
+function showCaptcha() {
+  document.getElementById('captchaGroup').classList.add('show');
+  if (!captchaId) {
+    loadCaptcha();
+  }
+}
+
+// 登录表单提交
 document.getElementById('loginForm').addEventListener('submit', async function(e) {
   e.preventDefault();
   
+  if (isLoading) return;
+  
   const username = document.getElementById('username').value.trim();
   const password = document.getElementById('password').value;
-  const errorMsg = document.getElementById('errorMsg');
+  const honeyPot = document.getElementById('website').value;
+  const captchaAnswer = document.getElementById('captchaAnswer').value.trim();
+  const loginBtn = document.getElementById('loginBtn');
   
-  // 验证账号密码
-  if (USERS[username] && USERS[username] === password) {
-    // 登录成功，保存登录状态
-    sessionStorage.setItem('loggedIn', 'true');
-    sessionStorage.setItem('username', username);
-    
-    // 记录登录日志
-    try {
-      await fetch(LOG_API_URL + '/log', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: username,
-          timestamp: new Date().toISOString(),
-          location: window.location.href
-        })
-      });
-    } catch (e) {
-      console.log('日志记录失败:', e);
-    }
-    
-    // 跳转到主页
-    window.location.href = 'index.html';
-  } else {
-    // 登录失败
-    errorMsg.style.display = 'block';
-    setTimeout(() => {
-      errorMsg.style.display = 'none';
-    }, 3000);
+  // 蜜罐检测
+  if (honeyPot) {
+    showError('检测到异常行为');
+    return;
   }
+  
+  // 如果需要验证码但未填写
+  const captchaGroup = document.getElementById('captchaGroup');
+  if (captchaGroup.classList.contains('show') && !captchaAnswer) {
+    showError('请输入验证码答案');
+    return;
+  }
+  
+  isLoading = true;
+  loginBtn.disabled = true;
+  loginBtn.textContent = '登录中...';
+  hideFailHint();
+  
+  try {
+    const resp = await fetch(LOG_API_URL + '/log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username,
+        password,
+        captchaId,
+        captchaAnswer,
+        website: honeyPot // 蜜罐字段
+      })
+    });
+    
+    const data = await resp.json();
+    
+    if (data.success) {
+      // 登录成功
+      sessionStorage.setItem('loggedIn', 'true');
+      sessionStorage.setItem('username', data.username);
+      window.location.href = 'index.html';
+    } else {
+      // 登录失败
+      failCount = data.failCount || failCount + 1;
+      
+      if (data.requireCaptcha) {
+        showCaptcha();
+        showError(data.message || '验证码错误');
+      } else {
+        showError(data.message || '用户名或密码错误');
+        showFailHint(`已连续失败 ${failCount} 次，再失败 ${3 - failCount} 次将需要验证码`);
+      }
+      
+      // 如果需要验证码但还没显示，且失败次数接近阈值
+      if (failCount >= 2 && !captchaGroup.classList.contains('show')) {
+        showFailHint('⚠️ 再失败 1 次将需要输入验证码');
+      }
+    }
+  } catch (e) {
+    showError('网络错误，请稍后重试');
+  }
+  
+  isLoading = false;
+  loginBtn.disabled = false;
+  loginBtn.textContent = '登录';
 });
+
+// 如果已有登录状态，直接跳转
+if (sessionStorage.getItem('loggedIn')) {
+  window.location.href = 'index.html';
+}
 </script>
 </body>
 </html>

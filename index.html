@@ -152,6 +152,38 @@ let POLICY_DATA = [];
 let allVehicles = [];
 let dataLoaded = false;
 
+// 搜索频率限制
+const SEARCH_LIMIT = {
+  maxSearches: 20,      // 每分钟最大搜索次数
+  windowMs: 60 * 1000,  // 1 分钟窗口
+  cooldownMs: 30 * 1000 // 超限后冷却 30 秒
+};
+let searchTimestamps = [];
+let searchCooldownUntil = 0;
+
+function checkSearchLimit() {
+  const now = Date.now();
+  
+  // 检查冷却期
+  if (now < searchCooldownUntil) {
+    const remaining = Math.ceil((searchCooldownUntil - now) / 1000);
+    return { allowed: false, message: `搜索过于频繁，请 ${remaining} 秒后重试` };
+  }
+  
+  // 清理过期记录
+  searchTimestamps = searchTimestamps.filter(t => now - t < SEARCH_LIMIT.windowMs);
+  
+  // 检查是否超限
+  if (searchTimestamps.length >= SEARCH_LIMIT.maxSearches) {
+    searchCooldownUntil = now + SEARCH_LIMIT.cooldownMs;
+    return { allowed: false, message: `搜索过于频繁，请 ${SEARCH_LIMIT.cooldownMs / 1000} 秒后重试` };
+  }
+  
+  // 记录本次搜索
+  searchTimestamps.push(now);
+  return { allowed: true };
+}
+
 // 加载数据
 async function loadData() {
   try {
@@ -205,6 +237,13 @@ function getStatusClass(endDateStr) {
 function doSearch() {
   if (!dataLoaded) {
     alert('数据正在加载，请稍后再试');
+    return;
+  }
+  
+  // 检查搜索频率限制
+  const limitCheck = checkSearchLimit();
+  if (!limitCheck.allowed) {
+    alert(limitCheck.message);
     return;
   }
   
