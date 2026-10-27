@@ -7,20 +7,21 @@
 
 // 主路由处理函数
 export async function onRequest(context) {
-  const { request, env } = context;
+  const { request, env, params } = context;
   const url = new URL(request.url);
   const path = url.pathname;
+  const subPath = params.path || '';
   
-  // 根据路径和方法路由到对应处理函数
-  if (path === '/api/data/list' && request.method === 'GET') {
+  // 根据子路径和方法路由到对应处理函数
+  if (subPath === 'list' && request.method === 'GET') {
     return handleList(context);
-  } else if (path === '/api/data/add' && request.method === 'POST') {
+  } else if (subPath === 'add' && request.method === 'POST') {
     return handleAdd(context);
-  } else if (path === '/api/data/update' && request.method === 'POST') {
+  } else if (subPath === 'update' && request.method === 'POST') {
     return handleUpdate(context);
-  } else if (path === '/api/data/delete' && request.method === 'POST') {
+  } else if (subPath === 'delete' && request.method === 'POST') {
     return handleDelete(context);
-  } else if (path === '/api/data/import-delete' && request.method === 'POST') {
+  } else if (subPath === 'import-delete' && request.method === 'POST') {
     return handleImportDelete(context);
   }
   
