@@ -207,14 +207,16 @@ body {
 <script>
 // 检查登录状态
 if (!sessionStorage.getItem('loggedIn')) {
+  alert('请先登录');
   window.location.href = 'login.html';
 }
 
 // 检查是否为管理员
 const currentUser = sessionStorage.getItem('username');
 if (currentUser !== 'zhangdp' && currentUser !== 'admin') {
-  alert('无权访问此页面');
-  window.location.href = 'index.html';
+  alert('您没有权限访问此页面，请使用管理员账号登录');
+  sessionStorage.clear();
+  window.location.href = 'login.html';
 }
 
 // 日志记录 API
