@@ -284,12 +284,13 @@ function displayLogs(logs) {
   logs.forEach(log => {
     const time = new Date(log.timestamp).toLocaleString('zh-CN');
     const ua = log.userAgent || 'unknown';
+    const ipClass = 'ip-' + log.ip.replace(/\./g, '-').replace(/:/g, '-');
     
     html += `
       <tr>
         <td class="username">${log.username}</td>
         <td class="ip">${log.ip}</td>
-        <td class="location" id="loc-${log.ip.replace(/\./g, '-').replace(/:/g, '-')}">查询中...</td>
+        <td class="location ${ipClass}">查询中...</td>
         <td class="time">${time}</td>
         <td class="ua" title="${ua}">${ua}</td>
       </tr>
@@ -309,7 +310,6 @@ async function queryAllIPLocations(logs) {
   
   for (const ip of uniqueIPs) {
     try {
-      // 使用 ip.sb 查询（支持 IPv6，国内可访问）
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000); // 5秒超时
       
@@ -320,35 +320,44 @@ async function queryAllIPLocations(logs) {
       
       const data = await response.json();
       
-      const locationCell = document.getElementById(`loc-${ip.replace(/\./g, '-').replace(/:/g, '-')}`);
-      if (locationCell) {
+      // 使用 class 选择器更新所有相同 IP 的单元格
+      const ipClass = 'ip-' + ip.replace(/\./g, '-').replace(/:/g, '-');
+      const locationCells = document.querySelectorAll(`.${ipClass}`);
+      
+      if (locationCells.length > 0) {
         if (data.country || data.region) {
           const location = `${data.country || ''} ${data.region || ''} ${data.city || ''}`.trim();
           const isp = data.isp || '';
           const latitude = data.latitude || '';
           const longitude = data.longitude || '';
           
-          locationCell.textContent = location;
-          locationCell.title = `${location}\n运营商: ${isp}\n坐标: ${latitude}, ${longitude}`;
-          locationCell.style.cursor = 'help';
+          locationCells.forEach(cell => {
+            cell.textContent = location;
+            cell.title = `${location}\n运营商：${isp}\n坐标：${latitude}, ${longitude}`;
+            cell.style.cursor = 'help';
+          });
         } else {
-          locationCell.textContent = '未知位置';
-          locationCell.style.color = '#999';
+          locationCells.forEach(cell => {
+            cell.textContent = '未知位置';
+            cell.style.color = '#999';
+          });
         }
       }
       
       // 避免请求过快
       await new Promise(resolve => setTimeout(resolve, 500));
     } catch (e) {
-      const locationCell = document.getElementById(`loc-${ip.replace(/\./g, '-').replace(/:/g, '-')}`);
-      if (locationCell) {
+      const ipClass = 'ip-' + ip.replace(/\./g, '-').replace(/:/g, '-');
+      const locationCells = document.querySelectorAll(`.${ipClass}`);
+      
+      locationCells.forEach(cell => {
         if (e.name === 'AbortError') {
-          locationCell.textContent = '查询超时';
+          cell.textContent = '查询超时';
         } else {
-          locationCell.textContent = '查询失败';
+          cell.textContent = '查询失败';
         }
-        locationCell.style.color = '#f5222d';
-      }
+        cell.style.color = '#f5222d';
+      });
     }
   }
 }
