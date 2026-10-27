@@ -289,7 +289,7 @@ function displayLogs(logs) {
       <tr>
         <td class="username">${log.username}</td>
         <td class="ip">${log.ip}</td>
-        <td class="location" id="loc-${log.ip.replace(/\./g, '-')}">查询中...</td>
+        <td class="location" id="loc-${log.ip.replace(/\./g, '-').replace(/:/g, '-')}">查询中...</td>
         <td class="time">${time}</td>
         <td class="ua" title="${ua}">${ua}</td>
       </tr>
