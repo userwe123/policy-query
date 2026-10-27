@@ -316,15 +316,15 @@ body {
   </div>
   
   <div class="tabs">
-    <button class="tab active" onclick="switchTab('add')">📥 添加数据</button>
+    <button class="tab" onclick="switchTab('add')">📥 添加数据</button>
     <button class="tab" onclick="switchTab('update')">🔄 更新数据</button>
     <button class="tab" onclick="switchTab('delete')">🗑️ 删除数据</button>
-    <button class="tab" onclick="switchTab('list')">📋 数据列表</button>
     <button class="tab" onclick="window.location.href='admin.html'">返回管理</button>
+    <button class="tab active" onclick="switchTab('list')">📋 数据列表</button>
   </div>
   
   <!-- 添加数据面板 -->
-  <div id="addPanel" class="panel active">
+  <div id="addPanel" class="panel">
     <h2>添加保单数据</h2>
     <p style="color:#666; margin-bottom:16px; font-size:14px;">
       支持批量添加：上传包含 PDF 保单的压缩包（ZIP），系统将自动解析并添加到数据库
@@ -422,7 +422,7 @@ body {
   </div>
   
   <!-- 数据列表面板 -->
-  <div id="listPanel" class="panel">
+  <div id="listPanel" class="panel active">
     <h2>数据列表</h2>
     <div style="margin-bottom:16px; display:flex; gap:10px; flex-wrap:wrap;">
       <input type="text" id="searchInput" placeholder="搜索车架号或车牌号" style="flex:1; min-width:200px; padding:8px 12px; border:1px solid #ddd; border-radius:6px;">
