@@ -52,6 +52,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC'
 .policy-row .value.expired { color: #f5222d; font-weight: 600; }
 .download-btn { display: inline-flex; align-items: center; gap: 4px; margin-top: 10px; padding: 6px 14px; background: #f0f7ff; color: #1a73e8; border: 1px solid #d6e4ff; border-radius: 6px; font-size: 13px; cursor: pointer; text-decoration: none; transition: all 0.2s; }
 .download-btn:hover { background: #1a73e8; color: white; }
+.download-btn.mirror { background: #fff7e6; color: #fa8c16; border-color: #ffd591; }
+.download-btn.mirror:hover { background: #fa8c16; color: white; }
+.download-hint { font-size: 11px; color: #999; text-align: center; margin-top: 8px; }
 .empty-state { text-align: center; padding: 60px 20px; color: #999; }
 .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
 .empty-state p { font-size: 15px; }
@@ -297,13 +300,25 @@ function renderResults(results) {
       const dotClass = p.type === '交强险' ? 'green' : 'blue';
       const endStatus = getStatusClass(p.end);
       const endLabel = endStatus === 'expired' ? '已到期' : endStatus === 'expiring' ? '即将到期' : '';
+      const company = p.company || '合众财产保险股份有限公司广东分公司';
+      const phone = '400-609-5555'; // 合众财险客服电话
+      
+      // 生成备用下载链接（ghfast.top 镜像）
+      const rawPath = p.file.replace('https://cdn.jsdelivr.net/gh/userwe123/policy-query@main/', '');
+      const mirrorUrl = `https://ghfast.top/https://raw.githubusercontent.com/userwe123/policy-query/main/${rawPath}`;
 
       html += `<div class="policy-card ${typeClass}">`;
       html += `<div class="policy-type"><span class="dot ${dotClass}"></span>${p.type}</div>`;
       html += `<div class="policy-row"><span class="label">保单号</span><span class="value">${p.policy_no}</span></div>`;
       html += `<div class="policy-row"><span class="label">起保日期</span><span class="value">${p.start}</span></div>`;
       html += `<div class="policy-row"><span class="label">到期日期</span><span class="value ${endStatus}">${p.end}${endLabel ? ' ⚠️' + endLabel : ''}</span></div>`;
-      html += `<a class="download-btn" href="${p.file}" download>📥 下载保单</a>`;
+      html += `<div class="policy-row"><span class="label">保险公司</span><span class="value">${company}</span></div>`;
+      html += `<div class="policy-row"><span class="label">客服电话</span><span class="value"><a href="tel:${phone}" style="color:#1a73e8;text-decoration:none;">${phone}</a></span></div>`;
+      html += `<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">`;
+      html += `<a class="download-btn" href="${p.file}" download style="flex:1;min-width:120px;justify-content:center;">📥 下载保单</a>`;
+      html += `<a class="download-btn mirror" href="${mirrorUrl}" download style="flex:1;min-width:120px;justify-content:center;">⚡ 备用下载</a>`;
+      html += `</div>`;
+      html += `<div class="download-hint"> 如下载慢，请尝试备用下载</div>`;
       html += `</div>`;
     });
 
