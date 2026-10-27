@@ -53,7 +53,7 @@ function getClientIP(request) {
 /**
  * 检测是否为 Bot
  */
-function isBot(userAgent) {
+async function isBot(env, userAgent) {
   if (!userAgent) return true; // 无 UA 视为 Bot
   
   // 检查白名单
@@ -61,9 +61,40 @@ function isBot(userAgent) {
     if (pattern.test(userAgent)) return false;
   }
   
-  // 检查黑名单
+  // 检查内置黑名单
   for (const pattern of BOT_PATTERNS) {
     if (pattern.test(userAgent)) return true;
+  }
+  
+  // 检查 KV 中的自定义黑名单
+  try {
+    const blacklist = await env.LOGS.get('ua_blacklist');
+    if (blacklist) {
+      const list = JSON.parse(blacklist);
+      // 检查是否完全匹配
+      const exactMatch = list.some(item => item.userAgent === userAgent);
+      if (exactMatch) {
+        // 更新命中次数
+        const item = list.find(item => item.userAgent === userAgent);
+        if (item) {
+          item.hitCount = (item.hitCount || 0) + 1;
+          await env.LOGS.put('ua_blacklist', JSON.stringify(list));
+        }
+        return true;
+      }
+      
+      // 检查是否包含匹配（模糊匹配）
+      const partialMatch = list.some(item => {
+        // 如果黑名单中的 UA 较短，检查是否包含
+        if (item.userAgent.length < 50) {
+          return userAgent.includes(item.userAgent);
+        }
+        return false;
+      });
+      if (partialMatch) return true;
+    }
+  } catch (e) {
+    console.error('Failed to check blacklist:', e);
   }
   
   return false;
@@ -152,7 +183,7 @@ export async function onRequest(context) {
   
   // 1. Bot 检测（仅对 API 请求）
   if (path.startsWith('/api/')) {
-    if (isBot(userAgent)) {
+    if (await isBot(env, userAgent)) {
       console.log(`[Anti-Crawler] Bot detected: ${clientIP} - ${userAgent}`);
       
       // 记录 Bot 访问日志
