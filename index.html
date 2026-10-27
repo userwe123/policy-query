@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>保单查询系统</title>
+<title>保单查询 - 首页</title>
+<link rel="stylesheet" href="styles.css">
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script>
 // 登录检查
@@ -12,166 +13,367 @@ if (!sessionStorage.getItem('loggedIn')) {
 }
 </script>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #f0f2f5; color: #333; min-height: 100vh; }
-.header { background: linear-gradient(135deg, #1a73e8, #0d47a1); color: white; padding: 24px 0; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.15); position: relative; }
-.header h1 { font-size: 24px; font-weight: 600; margin-bottom: 4px; }
-.header p { font-size: 14px; opacity: 0.85; }
-.container { max-width: 960px; margin: 0 auto; padding: 24px 16px; }
-.search-box { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin-bottom: 20px; }
-.search-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-.search-input { flex: 1; min-width: 200px; padding: 12px 16px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 15px; transition: border-color 0.2s; outline: none; }
-.search-input:focus { border-color: #1a73e8; }
-.search-btn { padding: 12px 28px; background: #1a73e8; color: white; border: none; border-radius: 8px; font-size: 15px; cursor: pointer; transition: background 0.2s; white-space: nowrap; }
-.search-btn:hover { background: #1557b0; }
-.search-btn.clear { background: #f5f5f5; color: #666; }
-.search-btn.clear:hover { background: #e0e0e0; }
-.search-hint { font-size: 12px; color: #888; margin-top: 8px; }
-.export-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-.export-btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
-.export-btn.query { background: #52c41a; color: white; }
-.export-btn.query:hover { background: #389e0d; }
-.export-btn.all { background: #722ed1; color: white; }
-.export-btn.all:hover { background: #531dab; }
-.export-btn.pdf { background: #fa8c16; color: white; }
-.export-btn.pdf:hover { background: #d48806; }
-.export-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.progress-bar { width: 100%; height: 24px; background: #f0f0f0; border-radius: 12px; overflow: hidden; margin: 10px 0; position: relative; }
-.progress-fill { height: 100%; background: linear-gradient(90deg, #1a73e8, #0d47a1); transition: width 0.3s ease; }
-.progress-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 12px; font-weight: 600; color: #333; }
-.stats { display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
-.stat-card { background: white; border-radius: 10px; padding: 16px 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); flex: 1; min-width: 140px; }
-.stat-card .label { font-size: 13px; color: #888; margin-bottom: 4px; }
-.stat-card .value { font-size: 22px; font-weight: 700; color: #1a73e8; }
-.results { background: white; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); overflow: hidden; }
-.results-header { padding: 16px 20px; border-bottom: 1px solid #f0f0f0; font-size: 15px; color: #666; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-.results-header .badge { background: #e6f7ff; color: #1a73e8; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 500; }
-.result-item { padding: 20px; border-bottom: 1px solid #f5f5f5; transition: background 0.15s; }
-.result-item:hover { background: #fafbff; }
-.result-item:last-child { border-bottom: none; }
-.vehicle-info { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
-.plate-badge { background: #1a73e8; color: white; padding: 4px 12px; border-radius: 6px; font-size: 15px; font-weight: 600; }
-.vin-text { font-size: 13px; color: #888; font-family: 'Courier New', monospace; }
-.policy-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
-.policy-card { border: 1px solid #e8e8e8; border-radius: 10px; padding: 16px; position: relative; }
-.policy-card.jqx { border-left: 4px solid #52c41a; }
-.policy-card.syx { border-left: 4px solid #1a73e8; }
-.policy-type { font-size: 14px; font-weight: 600; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
-.policy-type .dot { width: 8px; height: 8px; border-radius: 50%; }
-.policy-type .dot.green { background: #52c41a; }
-.policy-type .dot.blue { background: #1a73e8; }
-.policy-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; font-size: 13px; }
-.policy-row .label { color: #888; }
-.policy-row .value { font-weight: 500; }
-.policy-row .value.expiring { color: #fa8c16; font-weight: 600; }
-.policy-row .value.expired { color: #f5222d; font-weight: 600; }
-.download-btn { display: inline-flex; align-items: center; gap: 4px; margin-top: 10px; padding: 6px 14px; background: #f0f7ff; color: #1a73e8; border: 1px solid #d6e4ff; border-radius: 6px; font-size: 13px; cursor: pointer; text-decoration: none; transition: all 0.2s; }
-.download-btn:hover { background: #1a73e8; color: white; }
-.download-btn.mirror { background: #fff7e6; color: #fa8c16; border-color: #ffd591; }
-.download-btn.mirror:hover { background: #fa8c16; color: white; }
-.download-hint { font-size: 11px; color: #999; text-align: center; margin-top: 8px; }
-.empty-state { text-align: center; padding: 60px 20px; color: #999; }
-.empty-state .icon { font-size: 48px; margin-bottom: 12px; }
-.empty-state p { font-size: 15px; }
-.footer { text-align: center; padding: 20px; color: #aaa; font-size: 13px; }
-.user-badge { position: absolute; top: 20px; left: 20px; background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 12px; border: 1px solid rgba(255,255,255,0.4); }
-@media (max-width: 600px) {
-  .header { padding: 18px 0; }
-  .header h1 { font-size: 20px; }
-  .header p { font-size: 13px; }
-  .container { padding: 12px 10px; }
-  .search-box { padding: 16px; border-radius: 10px; }
-  .search-row { flex-direction: column; gap: 10px; }
-  .search-input { width: 100%; min-width: unset; font-size: 16px; padding: 14px 16px; }
-  .search-btn { width: 100%; padding: 14px 28px; font-size: 16px; }
-  .search-btn.clear { background: #f5f5f5; color: #666; }
-  .search-btn.clear:hover { background: #e0e0e0; }
-  .export-bar { flex-direction: column; }
-  .export-btn { width: 100%; justify-content: center; }
-  .stats { flex-direction: column; gap: 10px; }
-  .stat-card { padding: 14px 16px; }
-  .stat-card .value { font-size: 20px; }
-  .results-header { padding: 14px 16px; font-size: 14px; }
-  .result-item { padding: 16px 14px; }
-  .vehicle-info { gap: 8px; }
-  .plate-badge { font-size: 14px; padding: 4px 10px; }
-  .vin-text { font-size: 12px; word-break: break-all; }
-  .policy-cards { grid-template-columns: 1fr; gap: 10px; }
-  .policy-card { padding: 14px; }
-  .policy-row { font-size: 13px; flex-wrap: wrap; gap: 2px; }
-  .policy-row .value { font-size: 13px; }
-  .download-btn { display: flex; justify-content: center; width: 100%; padding: 12px 14px; font-size: 15px; margin-top: 12px; -webkit-tap-highlight-color: transparent; }
-  .empty-state { padding: 40px 20px; }
-  .empty-state .icon { font-size: 40px; }
-  .footer { padding: 16px; font-size: 12px; }
-  .user-badge { position: static; margin-bottom: 10px; display: inline-block; }
+/* 页面特定样式 */
+.search-card {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.search-row {
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 240px;
+}
+
+.search-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.search-hint {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  margin-top: var(--spacing-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.export-bar {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
+  flex-wrap: wrap;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.progress-container {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.results-container {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+.results-header {
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
+
+.results-header .info {
+  font-size: var(--font-size-base);
+  color: var(--text-secondary);
+}
+
+.result-item {
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid var(--border-light);
+  transition: background var(--transition-fast);
+}
+
+.result-item:hover {
+  background: var(--bg-tertiary);
+}
+
+.result-item:last-child {
+  border-bottom: none;
+}
+
+.vehicle-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.plate-badge {
+  background: var(--primary-color);
+  color: white;
+  padding: 6px 16px;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
+
+.vin-text {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  font-family: 'Courier New', monospace;
+}
+
+.policy-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.policy-card {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  position: relative;
+  transition: all var(--transition-fast);
+}
+
+.policy-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.policy-card.jqx {
+  border-left: 4px solid var(--success-color);
+}
+
+.policy-card.syx {
+  border-left: 4px solid var(--info-color);
+}
+
+.policy-type {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  margin-bottom: var(--spacing-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.policy-type .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.policy-type .dot.green { background: var(--success-color); }
+.policy-type .dot.blue { background: var(--info-color); }
+
+.policy-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  font-size: var(--font-size-sm);
+}
+
+.policy-row .label {
+  color: var(--text-muted);
+}
+
+.policy-row .value {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.policy-row .value.expiring {
+  color: var(--warning-color);
+  font-weight: 600;
+}
+
+.policy-row .value.expired {
+  color: var(--danger-color);
+  font-weight: 600;
+}
+
+.policy-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.download-btn {
+  flex: 1;
+  min-width: 120px;
+  justify-content: center;
+}
+
+.download-hint {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: var(--spacing-sm);
+}
+
+.not-found-item {
+  background: rgba(250, 173, 20, 0.05);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-left: 4px solid var(--warning-color);
+}
+
+.not-found-title {
+  color: var(--warning-color);
+  font-weight: 600;
+  margin-bottom: var(--spacing-sm);
+}
+
+.not-found-list {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+@media (max-width: 768px) {
+  .search-row {
+    flex-direction: column;
+  }
+  
+  .search-input {
+    width: 100%;
+  }
+  
+  .search-actions {
+    width: 100%;
+  }
+  
+  .search-actions .btn {
+    flex: 1;
+  }
+  
+  .export-bar {
+    flex-direction: column;
+  }
+  
+  .export-bar .btn {
+    width: 100%;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .policy-cards {
+    grid-template-columns: 1fr;
+  }
+  
+  .policy-actions {
+    flex-direction: column;
+  }
+  
+  .download-btn {
+    width: 100%;
+  }
 }
 </style>
 </head>
 <body>
 
-<div class="header">
-  <h1>保单查询系统</h1>
-  <p>输入车牌号或车架号，快速查询交强险与商业险信息</p>
-  <div class="user-badge" id="userBadge"></div>
-  <div style="position:absolute;top:20px;right:20px;display:flex;gap:10px;">
-    <button onclick="goToDashboard()" id="dashboardBtn" style="padding:6px 16px;background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.4);border-radius:6px;cursor:pointer;font-size:13px;">📊 数据看板</button>
-    <button onclick="goToAdmin()" id="adminBtn" style="padding:6px 16px;background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.4);border-radius:6px;cursor:pointer;font-size:13px;display:none;">访问管理</button>
-    <button onclick="goToDataManagement()" id="dataMgmtBtn" style="padding:6px 16px;background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.4);border-radius:6px;cursor:pointer;font-size:13px;display:none;"> 数据管理</button>
-    <button onclick="logout()" style="padding:6px 16px;background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.4);border-radius:6px;cursor:pointer;font-size:13px;">退出登录</button>
-  </div>
-</div>
-
 <div class="container">
-  <div class="search-box">
-    <div class="search-row">
-      <input type="text" class="search-input" id="searchInput" placeholder="支持多车查询，用逗号、空格或换行分隔" autofocus>
-      <button class="search-btn" onclick="doSearch()">查询</button>
-      <button class="search-btn clear" onclick="clearSearch()">清空</button>
+  <div class="header">
+    <h1>🔍 保单查询</h1>
+    <p>输入车牌号或车架号，快速查询交强险与商业险信息</p>
+    <div class="user-badge" id="userBadge" style="position:absolute;top:24px;left:24px;background:rgba(255,255,255,0.2);padding:6px 16px;border-radius:20px;font-size:var(--font-size-sm);border:1px solid rgba(255,255,255,0.4);"></div>
+    <div style="position:absolute;top:24px;right:24px;display:flex;gap:var(--spacing-sm);">
+      <button onclick="goToDashboard()" class="btn btn-ghost">📊 数据看板</button>
+      <button onclick="goToAdmin()" id="adminBtn" class="btn btn-ghost" style="display:none;">访问管理</button>
+      <button onclick="goToDataManagement()" id="dataMgmtBtn" class="btn btn-ghost" style="display:none;">数据管理</button>
+      <button onclick="logout()" class="btn btn-ghost">退出登录</button>
     </div>
-    <div class="search-hint" id="searchHint">💡 支持多车查询：用逗号、空格或换行分隔多个车牌号/车架号</div>
+  </div>
+
+  <div class="search-card">
+    <div class="search-row">
+      <input type="text" class="input search-input" id="searchInput" placeholder="支持多车查询，用逗号、空格或换行分隔" autofocus>
+      <div class="search-actions">
+        <button class="btn btn-primary" onclick="doSearch()">🔍 查询</button>
+        <button class="btn btn-secondary" onclick="clearSearch()">清空</button>
+      </div>
+    </div>
+    <div class="search-hint" id="searchHint">
+      💡 支持多车查询：用逗号、空格或换行分隔多个车牌号/车架号
+    </div>
   </div>
 
   <div class="export-bar" id="exportBar" style="display:none;">
-    <button class="export-btn query" onclick="exportQueryResults()">📊 导出查询结果</button>
-    <button class="export-btn pdf" onclick="exportQueryPDFs()">📄 导出保单PDF</button>
-    <button class="export-btn all" id="exportAllBtn" onclick="exportAllData()" style="display:none;">📦 导出所有数据</button>
-    <button class="export-btn all" id="exportAllPDFBtn" onclick="exportAllPDFs()" style="display:none;">📄 导出所有保单</button>
+    <button class="btn btn-success" onclick="exportQueryResults()">📊 导出查询结果</button>
+    <button class="btn btn-warning" onclick="exportQueryPDFs()">📄 导出保单PDF</button>
+    <button class="btn btn-primary" id="exportAllBtn" onclick="exportAllData()" style="display:none;">📦 导出所有数据</button>
+    <button class="btn btn-primary" id="exportAllPDFBtn" onclick="exportAllPDFs()" style="display:none;">📄 导出所有保单</button>
   </div>
 
-  <div id="progressContainer" style="display:none; margin-bottom: 20px;">
-    <div class="progress-bar">
-      <div class="progress-fill" id="progressFill" style="width: 0%"></div>
-      <div class="progress-text" id="progressText">0%</div>
+  <div id="progressContainer" class="progress-container" style="display:none;">
+    <div class="progress">
+      <div class="progress-bar" id="progressFill" style="width: 0%"></div>
     </div>
-    <div style="text-align: center; font-size: 13px; color: #666; margin-top: 5px;" id="progressInfo"></div>
+    <div class="progress-info">
+      <span id="progressText">0%</span>
+      <span id="progressInfo">准备下载...</span>
+    </div>
   </div>
 
-  <div class="stats" id="statsBar" style="display:none">
+  <div class="stats-grid" id="statsBar" style="display:none">
     <div class="stat-card">
+      <div class="icon">🚗</div>
       <div class="label">车辆总数</div>
       <div class="value" id="statVehicles">0</div>
     </div>
     <div class="stat-card">
+      <div class="icon">📄</div>
       <div class="label">保单总数</div>
       <div class="value" id="statPolicies">0</div>
     </div>
-    <div class="stat-card">
-      <div class="label">即将到期（30天内）</div>
-      <div class="value" id="statExpiring" style="color:#fa8c16">0</div>
+    <div class="stat-card warning">
+      <div class="icon">⚠️</div>
+      <div class="label">即将到期</div>
+      <div class="value" id="statExpiring">0</div>
     </div>
   </div>
 
-  <div class="results" id="resultsArea">
-    <div class="empty-state" id="emptyState">
+  <div class="results-container" id="resultsArea">
+    <div class="empty-state">
       <div class="icon">🔍</div>
-      <p>请输入车牌号或车架号查询保单信息</p>
+      <div class="title">开始查询</div>
+      <div class="description">请输入车牌号或车架号查询保单信息</div>
     </div>
+  </div>
+
+  <div class="footer" style="text-align:center;padding:var(--spacing-lg);color:var(--text-muted);font-size:var(--font-size-sm);">
+    保单查询系统 · 数据来源于保单导出文件
   </div>
 </div>
 
-<div class="footer">保单查询系统 · 数据来源于保单导出文件</div>
-
+<script src="theme.js"></script>
 <script>
 // 当前用户信息
 const currentUser = sessionStorage.getItem('username');
@@ -205,28 +407,28 @@ function goToDashboard() {
   window.location.href = 'dashboard.html';
 }
 
-// 跳转到访问管理页面（仅限专属账号）
+// 跳转到访问管理页面
 function goToAdmin() {
   if (isAdmin) {
     window.location.href = 'admin.html';
   } else {
-    alert('您没有权限访问此页面\n\n当前登录账号：' + currentUser + '\n\n此功能仅限管理员使用');
+    alert('您没有权限访问此页面');
   }
 }
 
-// 跳转到数据管理页面（仅限专属账号）
+// 跳转到数据管理页面
 function goToDataManagement() {
   if (isAdmin) {
     window.location.href = 'data-management.html';
   } else {
-    alert('您没有权限访问此页面\n\n当前登录账号：' + currentUser + '\n\n此功能仅限管理员使用');
+    alert('您没有权限访问此页面');
   }
 }
 
 let POLICY_DATA = [];
 let allVehicles = [];
 let dataLoaded = false;
-let lastQueryResults = []; // 保存最近一次查询结果
+let lastQueryResults = [];
 
 // 搜索频率限制
 const SEARCH_LIMIT = {
@@ -256,12 +458,33 @@ function checkSearchLimit() {
   return { allowed: true };
 }
 
-// 加载数据
+// 加载数据（优先使用预加载的数据）
 async function loadData() {
   try {
-    const resp = await fetch('data.json?t=' + Date.now());
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    POLICY_DATA = await resp.json();
+    // 检查是否有预加载的数据
+    const preloadedData = sessionStorage.getItem('preloadedData');
+    const preloadedTime = sessionStorage.getItem('preloadedTime');
+    
+    if (preloadedData && preloadedTime) {
+      const age = Date.now() - parseInt(preloadedTime);
+      // 如果预加载数据在5分钟内，直接使用
+      if (age < 5 * 60 * 1000) {
+        POLICY_DATA = JSON.parse(preloadedData);
+        console.log('✓ 使用预加载数据');
+      } else {
+        // 否则重新加载
+        const resp = await fetch('data.json?t=' + Date.now());
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        POLICY_DATA = await resp.json();
+        console.log('✓ 重新加载数据');
+      }
+    } else {
+      // 没有预加载数据，正常加载
+      const resp = await fetch('data.json?t=' + Date.now());
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      POLICY_DATA = await resp.json();
+      console.log('✓ 首次加载数据');
+    }
     
     const groups = {};
     POLICY_DATA.forEach(p => {
@@ -290,7 +513,7 @@ async function loadData() {
   } catch (e) {
     console.error('加载数据失败:', e);
     document.getElementById('resultsArea').innerHTML = 
-      '<div class="empty-state"><div class="icon">⚠️</div><p>数据加载失败，请刷新页面重试</p></div>';
+      '<div class="empty-state"><div class="icon">⚠️</div><div class="title">数据加载失败</div><div class="description">请刷新页面重试</div></div>';
   }
 }
 
@@ -304,9 +527,7 @@ function getStatusClass(endDateStr) {
   return '';
 }
 
-// 解析多车查询输入
 function parseQueryInput(input) {
-  // 用逗号、空格、换行、制表符分隔
   return input
     .split(/[,，\s\n\r\t]+/)
     .map(s => s.trim().toUpperCase())
@@ -331,7 +552,6 @@ function doSearch() {
     return;
   }
 
-  // 解析多个查询
   const queries = parseQueryInput(rawInput);
   
   if (queries.length === 0) {
@@ -339,13 +559,11 @@ function doSearch() {
     return;
   }
   
-  // 检查查询数量限制
   if (queries.length > MAX_QUERY_COUNT) {
     alert(`查询数量超限\n\n当前输入：${queries.length} 台车\n允许上限：${MAX_QUERY_COUNT} 台车\n\n请减少查询数量后重试`);
     return;
   }
 
-  // 精确匹配
   const results = [];
   const notFound = [];
   
@@ -367,7 +585,7 @@ function doSearch() {
       msg += `\n\n未找到的车牌/车架号：\n${notFound.join('\n')}`;
     }
     document.getElementById('resultsArea').innerHTML = 
-      `<div class="empty-state"><div class="icon">😕</div><p>${msg.replace(/\n/g, '<br>')}</p></div>`;
+      `<div class="empty-state"><div class="icon">😕</div><div class="title">未找到结果</div><div class="description">${msg.replace(/\n/g, '<br>')}</div></div>`;
     document.getElementById('exportBar').style.display = 'none';
     return;
   }
@@ -386,7 +604,7 @@ function clearSearch() {
 
 function showEmpty() {
   document.getElementById('resultsArea').innerHTML = 
-    '<div class="empty-state"><div class="icon">🔍</div><p>请输入车牌号或车架号查询保单信息</p></div>';
+    '<div class="empty-state"><div class="icon">🔍</div><div class="title">开始查询</div><div class="description">请输入车牌号或车架号查询保单信息</div></div>';
   document.getElementById('exportBar').style.display = 'none';
   lastQueryResults = [];
 }
@@ -397,8 +615,8 @@ function renderResults(results, notFound = []) {
   const thirtyDaysLater = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
 
   let headerHtml = `<div class="results-header">`;
-  headerHtml += `<span>找到 ${results.length} 辆车，共 ${results.reduce((s, v) => s + v.policies.length, 0)} 份保单</span>`;
-  headerHtml += `<span class="badge">${isAdmin ? '管理员模式' : `普通模式（最多${MAX_QUERY_COUNT}台）`}</span>`;
+  headerHtml += `<span class="info">找到 ${results.length} 辆车，共 ${results.reduce((s, v) => s + v.policies.length, 0)} 份保单</span>`;
+  headerHtml += `<span class="badge badge-primary">${isAdmin ? '管理员模式' : `普通模式（最多${MAX_QUERY_COUNT}台）`}</span>`;
   headerHtml += `</div>`;
 
   let html = headerHtml;
@@ -428,71 +646,62 @@ function renderResults(results, notFound = []) {
       html += `<div class="policy-row"><span class="label">起保日期</span><span class="value">${p.start}</span></div>`;
       html += `<div class="policy-row"><span class="label">到期日期</span><span class="value ${endStatus}">${p.end}${endLabel ? ' ⚠️' + endLabel : ''}</span></div>`;
       html += `<div class="policy-row"><span class="label">保险公司</span><span class="value">${company}</span></div>`;
-      html += `<div class="policy-row"><span class="label">客服电话</span><span class="value"><a href="tel:${phone}" style="color:#1a73e8;text-decoration:none;">${phone}</a></span></div>`;
-      html += `<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">`;
-      html += `<a class="download-btn" href="${p.file}" download style="flex:1;min-width:120px;justify-content:center;">📥 下载保单</a>`;
-      html += `<a class="download-btn mirror" href="${mirrorUrl}" download style="flex:1;min-width:120px;justify-content:center;">⚡ 备用下载</a>`;
+      html += `<div class="policy-row"><span class="label">客服电话</span><span class="value"><a href="tel:${phone}" style="color:var(--primary-color);text-decoration:none;">${phone}</a></span></div>`;
+      html += `<div class="policy-actions">`;
+      html += `<a class="btn btn-primary download-btn" href="${p.file}" download>📥 下载保单</a>`;
+      html += `<a class="btn btn-outline download-btn" href="${mirrorUrl}" download>⚡ 备用下载</a>`;
       html += `</div>`;
-      html += `<div class="download-hint"> 如下载慢，请尝试备用下载</div>`;
+      html += `<div class="download-hint">如下载慢，请尝试备用下载</div>`;
       html += `</div>`;
     });
 
     html += `</div></div>`;
   });
 
-  // 显示未找到的车牌
   if (notFound.length > 0) {
-    html += `<div class="result-item" style="background:#fff7e6;">`;
-    html += `<div style="color:#fa8c16;font-weight:500;margin-bottom:8px;">⚠️ 以下车牌/车架号未找到：</div>`;
-    html += `<div style="color:#666;font-size:13px;">${notFound.join('、')}</div>`;
+    html += `<div class="not-found-item">`;
+    html += `<div class="not-found-title">⚠️ 以下车牌/车架号未找到：</div>`;
+    html += `<div class="not-found-list">${notFound.join('、')}</div>`;
     html += `</div>`;
   }
 
   area.innerHTML = html;
 }
 
-// 导出查询结果
+// 导出功能保持不变
 function exportQueryResults() {
   if (lastQueryResults.length === 0) {
     alert('没有可导出的查询结果');
     return;
   }
-  
   exportToCSV(lastQueryResults, `查询结果_${new Date().toISOString().split('T')[0]}`);
 }
 
-// 导出查询结果的保单PDF
 async function exportQueryPDFs() {
   if (lastQueryResults.length === 0) {
     alert('没有可导出的查询结果');
     return;
   }
-  
   await exportPDFs(lastQueryResults, `查询保单_${new Date().toISOString().split('T')[0]}`);
 }
 
-// 导出所有保单PDF（仅管理员）
 async function exportAllPDFs() {
   if (!isAdmin) {
     alert('您没有权限执行此操作');
     return;
   }
-  
   if (!confirm(`确定要导出系统中所有车辆保单PDF吗？\n\n共 ${allVehicles.length} 辆车，${POLICY_DATA.length} 份保单\n\n文件较大，请耐心等待`)) {
     return;
   }
-  
   await exportPDFs(allVehicles, `所有保单_${new Date().toISOString().split('T')[0]}`);
 }
 
-// 导出保单PDF的通用函数
 async function exportPDFs(vehicles, zipName) {
   const progressContainer = document.getElementById('progressContainer');
   const progressFill = document.getElementById('progressFill');
   const progressText = document.getElementById('progressText');
   const progressInfo = document.getElementById('progressInfo');
   
-  // 收集所有PDF文件
   const pdfFiles = [];
   vehicles.forEach(v => {
     v.policies.forEach(p => {
@@ -509,7 +718,6 @@ async function exportPDFs(vehicles, zipName) {
     return;
   }
   
-  // 显示进度条
   progressContainer.style.display = 'block';
   progressFill.style.width = '0%';
   progressText.textContent = '0%';
@@ -520,17 +728,13 @@ async function exportPDFs(vehicles, zipName) {
     let completed = 0;
     let failed = 0;
     
-    // 并发下载（每次3个）
     const batchSize = 3;
     for (let i = 0; i < pdfFiles.length; i += batchSize) {
       const batch = pdfFiles.slice(i, i + batchSize);
       
       await Promise.all(batch.map(async (file) => {
         try {
-          // 尝试主链接
           let response = await fetch(file.url);
-          
-          // 如果失败，尝试备用链接
           if (!response.ok) {
             const rawPath = file.url.replace('https://cdn.jsdelivr.net/gh/userwe123/policy-query@main/', '');
             const mirrorUrl = `https://ghfast.top/https://raw.githubusercontent.com/userwe123/policy-query/main/${rawPath}`;
@@ -543,14 +747,11 @@ async function exportPDFs(vehicles, zipName) {
             completed++;
           } else {
             failed++;
-            console.error(`下载失败: ${file.filename}`);
           }
         } catch (e) {
           failed++;
-          console.error(`下载失败: ${file.filename}`, e);
         }
         
-        // 更新进度
         const progress = Math.round(((completed + failed) / pdfFiles.length) * 100);
         progressFill.style.width = `${progress}%`;
         progressText.textContent = `${progress}%`;
@@ -564,29 +765,23 @@ async function exportPDFs(vehicles, zipName) {
       return;
     }
     
-    // 生成ZIP文件
     progressInfo.textContent = '正在打包ZIP文件...';
     const zipBlob = await zip.generateAsync({ type: 'blob' });
     
-    // 下载ZIP文件
     const link = document.createElement('a');
     link.href = URL.createObjectURL(zipBlob);
     link.download = `${zipName}.zip`;
     link.click();
     
-    // 隐藏进度条
     setTimeout(() => {
       progressContainer.style.display = 'none';
     }, 2000);
     
-    // 显示完成提示
     if (failed > 0) {
       alert(`导出完成！\n\n成功: ${completed} 个文件\n失败: ${failed} 个文件\n\nZIP文件已开始下载`);
     } else {
       alert(`导出成功！\n\n共 ${completed} 个保单文件\n\nZIP文件已开始下载`);
     }
-    
-    console.log(`导出成功：${zipName}.zip，共 ${completed} 个文件`);
     
   } catch (e) {
     console.error('导出失败:', e);
@@ -595,21 +790,17 @@ async function exportPDFs(vehicles, zipName) {
   }
 }
 
-// 导出所有数据（仅管理员）
 function exportAllData() {
   if (!isAdmin) {
     alert('您没有权限执行此操作');
     return;
   }
-  
   if (!confirm(`确定要导出系统中所有车辆保单数据吗？\n\n共 ${allVehicles.length} 辆车，${POLICY_DATA.length} 份保单`)) {
     return;
   }
-  
   exportToCSV(allVehicles, `所有车辆保单数据_${new Date().toISOString().split('T')[0]}`);
 }
 
-// 通用导出函数
 function exportToCSV(vehicles, filename) {
   let csv = '车牌号,车架号,保单类型,保单号,起保日期,到期日期,保险公司,客服电话\n';
   
@@ -621,16 +812,12 @@ function exportToCSV(vehicles, filename) {
     });
   });
   
-  // 添加 BOM 以支持中文
   const bom = '\uFEFF';
   const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
   link.download = `${filename}.csv`;
   link.click();
-  
-  // 记录导出日志
-  console.log(`导出成功：${filename}.csv，共 ${vehicles.length} 辆车`);
 }
 
 // Enter key search

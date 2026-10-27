@@ -397,17 +397,39 @@ body::before {
       </button>
     </form>
     
-    <div class="info-box">
-      <h4>💡 测试账号</h4>
-      <ul>
-        <li>管理员：<code>zhangdp</code> / <code>Aa123456</code></li>
-        <li>测试员：<code>test</code> / <code>test123</code></li>
-      </ul>
-    </div>
+
   </div>
 </div>
 
 <script src="theme.js"></script>
+<script>
+// 预加载数据（在用户登录时就开始加载）
+function preloadData() {
+  // 预加载主数据
+  const dataPromise = fetch('data.json?t=' + Date.now())
+    .then(resp => resp.json())
+    .then(data => {
+      sessionStorage.setItem('preloadedData', JSON.stringify(data));
+      sessionStorage.setItem('preloadedTime', Date.now().toString());
+      console.log('✓ 数据预加载完成，共', data.length, '条记录');
+      return data;
+    })
+    .catch(e => console.warn('预加载失败:', e));
+  
+  // 预加载页面资源
+  const pages = ['index.html', 'dashboard.html', 'data-management.html'];
+  pages.forEach(page => {
+    const link = document.createElement('link');
+    link.rel = 'prefetch';
+    link.href = page;
+    document.head.appendChild(link);
+  });
+  
+  return dataPromise;
+}
+
+// 立即开始预加载
+preloadData();
 <script>
 let captchaData = null;
 
