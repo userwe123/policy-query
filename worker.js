@@ -30,8 +30,8 @@ async function handleRequest(request) {
     try {
       // 使用多个 API 源，依次尝试
       const apis = [
-        `https://ip.sb/geoip/${ip}`,
         `https://ipapi.co/${ip}/json/`,
+        `https://ip.sb/geoip/${ip}`,
         `https://ipinfo.io/${ip}/json`
       ];
       
@@ -58,21 +58,21 @@ async function handleRequest(request) {
               longitude: ''
             };
             
-            // ip.sb 格式
-            if (data.country !== undefined) {
-              result.country = data.country || '';
-              result.region = data.region || '';
-              result.city = data.city || '';
-              result.isp = data.isp || '';
-              result.latitude = data.latitude || '';
-              result.longitude = data.longitude || '';
-            }
-            // ipapi.co 格式
-            else if (data.country_name !== undefined) {
+            // ipapi.co 格式（优先使用，数据最完整）
+            if (data.country_name !== undefined) {
               result.country = data.country_name || '';
               result.region = data.region || '';
               result.city = data.city || '';
               result.isp = data.org || '';
+              result.latitude = data.latitude || '';
+              result.longitude = data.longitude || '';
+            }
+            // ip.sb 格式
+            else if (data.country !== undefined) {
+              result.country = data.country || '';
+              result.region = data.region || '';
+              result.city = data.city || '';
+              result.isp = data.isp || '';
               result.latitude = data.latitude || '';
               result.longitude = data.longitude || '';
             }
