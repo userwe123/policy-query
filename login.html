@@ -128,7 +128,10 @@ const USERS = {
   'test': 'test123'
 };
 
-document.getElementById('loginForm').addEventListener('submit', function(e) {
+// 日志记录 API（部署 Worker 后替换此 URL）
+const LOG_API_URL = 'https://policy-query-logs.your-workers-subdomain.workers.dev';
+
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
   e.preventDefault();
   
   const username = document.getElementById('username').value.trim();
@@ -140,6 +143,21 @@ document.getElementById('loginForm').addEventListener('submit', function(e) {
     // 登录成功，保存登录状态
     sessionStorage.setItem('loggedIn', 'true');
     sessionStorage.setItem('username', username);
+    
+    // 记录登录日志
+    try {
+      await fetch(LOG_API_URL + '/log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: username,
+          timestamp: new Date().toISOString(),
+          location: window.location.href
+        })
+      });
+    } catch (e) {
+      console.log('日志记录失败:', e);
+    }
     
     // 跳转到主页
     window.location.href = 'index.html';
