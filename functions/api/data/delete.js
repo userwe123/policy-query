@@ -5,31 +5,24 @@
 // POST /api/data/delete - 删除数据（支持批量）
 // POST /api/data/import-delete - 导入表格删除
 
-// 主路由处理函数
+// 处理删除数据
+export async function onRequestPost(context) {
+  return handleDelete(context);
+}
+
+// 主路由处理函数（保留以兼容）
 export async function onRequest(context) {
-  const { request, env, params } = context;
-  const url = new URL(request.url);
-  const path = url.pathname;
-  const subPath = params.path || '';
+  const { request } = context;
   
-  // 根据子路径和方法路由到对应处理函数
-  if (subPath === 'list' && request.method === 'GET') {
-    return handleList(context);
-  } else if (subPath === 'add' && request.method === 'POST') {
-    return handleAdd(context);
-  } else if (subPath === 'update' && request.method === 'POST') {
-    return handleUpdate(context);
-  } else if (subPath === 'delete' && request.method === 'POST') {
+  if (request.method === 'POST') {
     return handleDelete(context);
-  } else if (subPath === 'import-delete' && request.method === 'POST') {
-    return handleImportDelete(context);
   }
   
   return new Response(JSON.stringify({
     success: false,
-    error: '未知的 API 路径'
+    error: '不支持的请求方法'
   }), {
-    status: 404,
+    status: 405,
     headers: { 'Content-Type': 'application/json' }
   });
 }
