@@ -14,6 +14,40 @@ if (!sessionStorage.getItem('loggedIn')) {
 </script>
 <style>
 /* 页面特定样式 */
+.header {
+  position: relative;
+  z-index: 1;
+}
+
+.user-badge {
+  position: absolute !important;
+  top: 24px !important;
+  left: 24px !important;
+  z-index: 10;
+  background: rgba(255,255,255,0.2) !important;
+  padding: 6px 16px !important;
+  border-radius: 20px !important;
+  font-size: var(--font-size-sm) !important;
+  border: 1px solid rgba(255,255,255,0.4) !important;
+  color: white !important;
+  white-space: nowrap;
+}
+
+.header-actions {
+  position: absolute !important;
+  top: 24px !important;
+  right: 24px !important;
+  z-index: 10;
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.header-actions .btn {
+  position: relative;
+  z-index: 10;
+  pointer-events: auto;
+}
+
 .search-card {
   background: var(--bg-secondary);
   border-radius: var(--radius-lg);
@@ -303,9 +337,9 @@ if (!sessionStorage.getItem('loggedIn')) {
   <div class="header">
     <h1>🔍 保单查询</h1>
     <p>输入车牌号或车架号，快速查询交强险与商业险信息</p>
-    <div class="user-badge" id="userBadge" style="position:absolute;top:24px;left:24px;background:rgba(255,255,255,0.2);padding:6px 16px;border-radius:20px;font-size:var(--font-size-sm);border:1px solid rgba(255,255,255,0.4);"></div>
-    <div style="position:absolute;top:24px;right:24px;display:flex;gap:var(--spacing-sm);">
-      <button onclick="goToDashboard()" class="btn btn-ghost">📊 数据看板</button>
+    <div class="user-badge" id="userBadge"></div>
+    <div class="header-actions">
+      <button onclick="goToDashboard()" class="btn btn-ghost"> 数据看板</button>
       <button onclick="goToAdmin()" id="adminBtn" class="btn btn-ghost" style="display:none;">访问管理</button>
       <button onclick="goToDataManagement()" id="dataMgmtBtn" class="btn btn-ghost" style="display:none;">数据管理</button>
       <button onclick="logout()" class="btn btn-ghost">退出登录</button>
