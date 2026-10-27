@@ -391,25 +391,10 @@ body {
   <div id="deletePanel" class="panel">
     <h2>删除保单数据</h2>
     <p style="color:#666; margin-bottom:16px; font-size:14px;">
-      支持手动选择删除或导入车架号表格批量删除
+      导入车架号表格批量删除
     </p>
     
-    <div style="display:flex; gap:10px; margin-bottom:16px;">
-      <button class="btn btn-primary" onclick="showManualDelete()">手动选择删除</button>
-      <button class="btn btn-secondary" onclick="showImportDelete()">导入表格删除</button>
-    </div>
-    
-    <div id="manualDeleteArea">
-      <p style="color:#666; margin-bottom:12px; font-size:14px;">
-        在"数据列表"标签页中选择要删除的车辆，然后点击此处的提交按钮
-      </p>
-      <div id="selectedVehicles" style="margin-bottom:12px; padding:12px; background:#f8f9fa; border-radius:6px; min-height:60px;">
-        <span style="color:#999;">未选择任何车辆</span>
-      </div>
-      <button class="btn btn-danger" onclick="submitManualDelete()">提交删除</button>
-    </div>
-    
-    <div id="importDeleteArea" style="display:none;">
+    <div id="importDeleteArea">
       <div class="upload-area" onclick="document.getElementById('deleteFileInput').click()">
         <div class="upload-icon">📄</div>
         <div class="upload-text">点击或拖拽上传 Excel/CSV 文件</div>
@@ -442,8 +427,6 @@ body {
     <div style="margin-bottom:16px; display:flex; gap:10px; flex-wrap:wrap;">
       <input type="text" id="searchInput" placeholder="搜索车架号或车牌号" style="flex:1; min-width:200px; padding:8px 12px; border:1px solid #ddd; border-radius:6px;">
       <button class="btn btn-primary" onclick="loadDataList()">搜索</button>
-      <button class="btn btn-secondary" onclick="selectAll()">全选</button>
-      <button class="btn btn-secondary" onclick="deselectAll()">取消全选</button>
     </div>
     
     <div id="dataListContainer">
@@ -551,7 +534,6 @@ async function loadDataList() {
     <table class="data-table">
       <thead>
         <tr>
-          <th style="width:40px;"><input type="checkbox" class="checkbox" onchange="toggleSelectAll(this)"></th>
           <th>车架号</th>
           <th>车牌号</th>
           <th>交强险</th>
@@ -565,11 +547,9 @@ async function loadDataList() {
   vehicles.forEach(v => {
     const jqxCount = v.policies.filter(p => p.type === '交强险').length;
     const syxCount = v.policies.filter(p => p.type === '商业险').length;
-    const checked = selectedVehicles.has(v.vin) ? 'checked' : '';
     
     html += `
       <tr>
-        <td><input type="checkbox" class="checkbox" ${checked} onchange="toggleSelect('${v.vin}', this)"></td>
         <td style="font-family:'Courier New',monospace; font-size:12px;">${v.vin}</td>
         <td>${v.plate}</td>
         <td>${jqxCount}</td>
@@ -581,50 +561,6 @@ async function loadDataList() {
   
   html += '</tbody></table>';
   document.getElementById('dataListContainer').innerHTML = html;
-}
-
-// 全选/取消全选
-function toggleSelectAll(checkbox) {
-  if (checkbox.checked) {
-    selectAll();
-  } else {
-    deselectAll();
-  }
-}
-
-function selectAll() {
-  allData.forEach(p => selectedVehicles.add(p.vin));
-  loadDataList();
-  updateSelectedDisplay();
-}
-
-function deselectAll() {
-  selectedVehicles.clear();
-  loadDataList();
-  updateSelectedDisplay();
-}
-
-function toggleSelect(vin, checkbox) {
-  if (checkbox.checked) {
-    selectedVehicles.add(vin);
-  } else {
-    selectedVehicles.delete(vin);
-  }
-  updateSelectedDisplay();
-}
-
-function updateSelectedDisplay() {
-  const display = document.getElementById('selectedVehicles');
-  if (selectedVehicles.size === 0) {
-    display.innerHTML = '<span style="color:#999;">未选择任何车辆</span>';
-  } else {
-    display.innerHTML = `
-      <div style="font-weight:600; margin-bottom:8px;">已选择 ${selectedVehicles.size} 辆车：</div>
-      <div style="font-size:12px; color:#666; max-height:100px; overflow-y:auto;">
-        ${Array.from(selectedVehicles).join('<br>')}
-      </div>
-    `;
-  }
 }
 
 // 删除单个车辆
@@ -652,52 +588,6 @@ async function deleteVehicle(vin) {
   } catch (e) {
     alert('删除失败：' + e.message);
   }
-}
-
-// 提交手动删除
-async function submitManualDelete() {
-  if (selectedVehicles.size === 0) {
-    alert('请先选择要删除的车辆');
-    return;
-  }
-  
-  if (!confirm(`确定要删除选中的 ${selectedVehicles.size} 辆车的所有保单数据吗？`)) {
-    return;
-  }
-  
-  try {
-    const resp = await fetch(API_URL + '/delete', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ vins: Array.from(selectedVehicles) })
-    });
-    
-    const data = await resp.json();
-    
-    if (data.success) {
-      alert(data.message);
-      selectedVehicles.clear();
-      updateSelectedDisplay();
-      loadStats();
-      loadDataList();
-    } else {
-      alert('删除失败：' + data.error);
-    }
-  } catch (e) {
-    alert('删除失败：' + e.message);
-  }
-}
-
-// 显示手动删除区域
-function showManualDelete() {
-  document.getElementById('manualDeleteArea').style.display = 'block';
-  document.getElementById('importDeleteArea').style.display = 'none';
-}
-
-// 显示导入删除区域
-function showImportDelete() {
-  document.getElementById('manualDeleteArea').style.display = 'none';
-  document.getElementById('importDeleteArea').style.display = 'block';
 }
 
 // 处理添加文件
