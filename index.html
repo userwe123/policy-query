@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>保单查询系统</title>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script>
 // 登录检查
 if (!sessionStorage.getItem('loggedIn')) {
@@ -32,7 +33,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC'
 .export-btn.query:hover { background: #389e0d; }
 .export-btn.all { background: #722ed1; color: white; }
 .export-btn.all:hover { background: #531dab; }
+.export-btn.pdf { background: #fa8c16; color: white; }
+.export-btn.pdf:hover { background: #d48806; }
 .export-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.progress-bar { width: 100%; height: 24px; background: #f0f0f0; border-radius: 12px; overflow: hidden; margin: 10px 0; position: relative; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, #1a73e8, #0d47a1); transition: width 0.3s ease; }
+.progress-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 12px; font-weight: 600; color: #333; }
 .stats { display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
 .stat-card { background: white; border-radius: 10px; padding: 16px 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); flex: 1; min-width: 140px; }
 .stat-card .label { font-size: 13px; color: #888; margin-bottom: 4px; }
@@ -126,7 +132,17 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC'
 
   <div class="export-bar" id="exportBar" style="display:none;">
     <button class="export-btn query" onclick="exportQueryResults()">📊 导出查询结果</button>
+    <button class="export-btn pdf" onclick="exportQueryPDFs()">📄 导出保单PDF</button>
     <button class="export-btn all" id="exportAllBtn" onclick="exportAllData()" style="display:none;">📦 导出所有数据</button>
+    <button class="export-btn all" id="exportAllPDFBtn" onclick="exportAllPDFs()" style="display:none;">📄 导出所有保单</button>
+  </div>
+
+  <div id="progressContainer" style="display:none; margin-bottom: 20px;">
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+      <div class="progress-text" id="progressText">0%</div>
+    </div>
+    <div style="text-align: center; font-size: 13px; color: #666; margin-top: 5px;" id="progressInfo"></div>
   </div>
 
   <div class="stats" id="statsBar" style="display:none">
@@ -167,6 +183,7 @@ document.getElementById('userBadge').textContent = `👤 ${currentUser}${isAdmin
 if (isAdmin) {
   document.getElementById('adminBtn').style.display = 'block';
   document.getElementById('exportAllBtn').style.display = 'flex';
+  document.getElementById('exportAllPDFBtn').style.display = 'flex';
 }
 
 // 更新搜索提示
@@ -425,6 +442,140 @@ function exportQueryResults() {
   }
   
   exportToCSV(lastQueryResults, `查询结果_${new Date().toISOString().split('T')[0]}`);
+}
+
+// 导出查询结果的保单PDF
+async function exportQueryPDFs() {
+  if (lastQueryResults.length === 0) {
+    alert('没有可导出的查询结果');
+    return;
+  }
+  
+  await exportPDFs(lastQueryResults, `查询保单_${new Date().toISOString().split('T')[0]}`);
+}
+
+// 导出所有保单PDF（仅管理员）
+async function exportAllPDFs() {
+  if (!isAdmin) {
+    alert('您没有权限执行此操作');
+    return;
+  }
+  
+  if (!confirm(`确定要导出系统中所有车辆保单PDF吗？\n\n共 ${allVehicles.length} 辆车，${POLICY_DATA.length} 份保单\n\n文件较大，请耐心等待`)) {
+    return;
+  }
+  
+  await exportPDFs(allVehicles, `所有保单_${new Date().toISOString().split('T')[0]}`);
+}
+
+// 导出保单PDF的通用函数
+async function exportPDFs(vehicles, zipName) {
+  const progressContainer = document.getElementById('progressContainer');
+  const progressFill = document.getElementById('progressFill');
+  const progressText = document.getElementById('progressText');
+  const progressInfo = document.getElementById('progressInfo');
+  
+  // 收集所有PDF文件
+  const pdfFiles = [];
+  vehicles.forEach(v => {
+    v.policies.forEach(p => {
+      pdfFiles.push({
+        url: p.file,
+        filename: `${v.plate}_${p.type}_${p.policy_no}.pdf`,
+        folder: v.plate
+      });
+    });
+  });
+  
+  if (pdfFiles.length === 0) {
+    alert('没有找到可导出的保单文件');
+    return;
+  }
+  
+  // 显示进度条
+  progressContainer.style.display = 'block';
+  progressFill.style.width = '0%';
+  progressText.textContent = '0%';
+  progressInfo.textContent = `准备下载 ${pdfFiles.length} 个保单文件...`;
+  
+  try {
+    const zip = new JSZip();
+    let completed = 0;
+    let failed = 0;
+    
+    // 并发下载（每次3个）
+    const batchSize = 3;
+    for (let i = 0; i < pdfFiles.length; i += batchSize) {
+      const batch = pdfFiles.slice(i, i + batchSize);
+      
+      await Promise.all(batch.map(async (file) => {
+        try {
+          // 尝试主链接
+          let response = await fetch(file.url);
+          
+          // 如果失败，尝试备用链接
+          if (!response.ok) {
+            const rawPath = file.url.replace('https://cdn.jsdelivr.net/gh/userwe123/policy-query@main/', '');
+            const mirrorUrl = `https://ghfast.top/https://raw.githubusercontent.com/userwe123/policy-query/main/${rawPath}`;
+            response = await fetch(mirrorUrl);
+          }
+          
+          if (response.ok) {
+            const blob = await response.blob();
+            zip.folder(file.folder).file(file.filename, blob);
+            completed++;
+          } else {
+            failed++;
+            console.error(`下载失败: ${file.filename}`);
+          }
+        } catch (e) {
+          failed++;
+          console.error(`下载失败: ${file.filename}`, e);
+        }
+        
+        // 更新进度
+        const progress = Math.round(((completed + failed) / pdfFiles.length) * 100);
+        progressFill.style.width = `${progress}%`;
+        progressText.textContent = `${progress}%`;
+        progressInfo.textContent = `已下载 ${completed} 个文件${failed > 0 ? `，失败 ${failed} 个` : ''} / 共 ${pdfFiles.length} 个`;
+      }));
+    }
+    
+    if (completed === 0) {
+      alert('所有文件下载失败，请检查网络连接');
+      progressContainer.style.display = 'none';
+      return;
+    }
+    
+    // 生成ZIP文件
+    progressInfo.textContent = '正在打包ZIP文件...';
+    const zipBlob = await zip.generateAsync({ type: 'blob' });
+    
+    // 下载ZIP文件
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(zipBlob);
+    link.download = `${zipName}.zip`;
+    link.click();
+    
+    // 隐藏进度条
+    setTimeout(() => {
+      progressContainer.style.display = 'none';
+    }, 2000);
+    
+    // 显示完成提示
+    if (failed > 0) {
+      alert(`导出完成！\n\n成功: ${completed} 个文件\n失败: ${failed} 个文件\n\nZIP文件已开始下载`);
+    } else {
+      alert(`导出成功！\n\n共 ${completed} 个保单文件\n\nZIP文件已开始下载`);
+    }
+    
+    console.log(`导出成功：${zipName}.zip，共 ${completed} 个文件`);
+    
+  } catch (e) {
+    console.error('导出失败:', e);
+    alert('导出失败：' + e.message);
+    progressContainer.style.display = 'none';
+  }
 }
 
 // 导出所有数据（仅管理员）
