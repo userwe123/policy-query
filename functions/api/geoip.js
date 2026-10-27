@@ -3,35 +3,65 @@
 // 国家名称中文映射
 const COUNTRY_MAP = {
   'China': '中国',
+  'CN': '中国',
   'United States': '美国',
+  'US': '美国',
   'United Kingdom': '英国',
+  'GB': '英国',
   'Japan': '日本',
+  'JP': '日本',
   'South Korea': '韩国',
+  'KR': '韩国',
   'Germany': '德国',
+  'DE': '德国',
   'France': '法国',
+  'FR': '法国',
   'Canada': '加拿大',
+  'CA': '加拿大',
   'Australia': '澳大利亚',
+  'AU': '澳大利亚',
   'Russia': '俄罗斯',
+  'RU': '俄罗斯',
   'India': '印度',
+  'IN': '印度',
   'Brazil': '巴西',
+  'BR': '巴西',
   'Singapore': '新加坡',
+  'SG': '新加坡',
   'Thailand': '泰国',
+  'TH': '泰国',
   'Malaysia': '马来西亚',
+  'MY': '马来西亚',
   'Indonesia': '印度尼西亚',
+  'ID': '印度尼西亚',
   'Philippines': '菲律宾',
+  'PH': '菲律宾',
   'Vietnam': '越南',
+  'VN': '越南',
   'Italy': '意大利',
+  'IT': '意大利',
   'Spain': '西班牙',
+  'ES': '西班牙',
   'Netherlands': '荷兰',
+  'NL': '荷兰',
   'Switzerland': '瑞士',
+  'CH': '瑞士',
   'Sweden': '瑞典',
+  'SE': '瑞典',
   'Norway': '挪威',
+  'NO': '挪威',
   'Denmark': '丹麦',
+  'DK': '丹麦',
   'Finland': '芬兰',
+  'FI': '芬兰',
   'Poland': '波兰',
+  'PL': '波兰',
   'Turkey': '土耳其',
+  'TR': '土耳其',
   'Mexico': '墨西哥',
-  'Argentina': '阿根廷'
+  'MX': '墨西哥',
+  'Argentina': '阿根廷',
+  'AR': '阿根廷'
 };
 
 // 省份名称中文映射（部分）
@@ -69,6 +99,49 @@ const REGION_MAP = {
   'Hainan': '海南',
   'Hong Kong': '香港',
   'Macau': '澳门'
+};
+
+// 城市名称中文映射（部分）
+const CITY_MAP = {
+  'Shenzhen': '深圳',
+  'Beijing': '北京',
+  'Shanghai': '上海',
+  'Guangzhou': '广州',
+  'Tianjin': '天津',
+  'Chongqing': '重庆',
+  'Chengdu': '成都',
+  'Wuhan': '武汉',
+  'Hangzhou': '杭州',
+  'Nanjing': '南京',
+  'Xi\'an': '西安',
+  'Suzhou': '苏州',
+  'Zhengzhou': '郑州',
+  'Changsha': '长沙',
+  'Shenyang': '沈阳',
+  'Qingdao': '青岛',
+  'Dalian': '大连',
+  'Dongguan': '东莞',
+  'Foshan': '佛山',
+  'Kunming': '昆明',
+  'Hefei': '合肥',
+  'Jinan': '济南',
+  'Xiamen': '厦门',
+  'Harbin': '哈尔滨',
+  'Fuzhou': '福州',
+  'Wenzhou': '温州',
+  'Ningbo': '宁波',
+  'Wuxi': '无锡',
+  'Shijiazhuang': '石家庄',
+  'Nanchang': '南昌',
+  'Guiyang': '贵阳',
+  'Nanning': '南宁',
+  'Lanzhou': '兰州',
+  'Taiyuan': '太原',
+  'Urumqi': '乌鲁木齐',
+  'Hohhot': '呼和浩特',
+  'Lhasa': '拉萨',
+  'Yinchuan': '银川',
+  'Xining': '西宁'
 };
 
 export async function onRequestGet(context) {
@@ -116,9 +189,9 @@ export async function onRequestGet(context) {
           
           // ipapi.co 格式（优先使用，数据最完整）
           if (data.country_name !== undefined) {
-            result.country = COUNTRY_MAP[data.country_name] || data.country_name || '';
+            result.country = COUNTRY_MAP[data.country_name] || COUNTRY_MAP[data.country_code] || data.country_name || '';
             result.region = REGION_MAP[data.region] || data.region || '';
-            result.city = data.city || '';
+            result.city = CITY_MAP[data.city] || data.city || '';
             result.isp = data.org || '';
             result.latitude = data.latitude || '';
             result.longitude = data.longitude || '';
@@ -127,7 +200,7 @@ export async function onRequestGet(context) {
           else if (data.country !== undefined) {
             result.country = COUNTRY_MAP[data.country] || data.country || '';
             result.region = REGION_MAP[data.region] || data.region || '';
-            result.city = data.city || '';
+            result.city = CITY_MAP[data.city] || data.city || '';
             result.isp = data.isp || '';
             result.latitude = data.latitude || '';
             result.longitude = data.longitude || '';
@@ -136,7 +209,7 @@ export async function onRequestGet(context) {
           else if (data.country !== undefined && data.city !== undefined) {
             result.country = COUNTRY_MAP[data.country] || data.country || '';
             result.region = REGION_MAP[data.region] || data.region || '';
-            result.city = data.city || '';
+            result.city = CITY_MAP[data.city] || data.city || '';
             result.isp = data.org || '';
             const loc = data.loc ? data.loc.split(',') : [];
             result.latitude = loc[0] || '';
