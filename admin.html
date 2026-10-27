@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>访问日志管理 - 保单查询系统</title>
+<link rel="stylesheet" href="styles.css">
+<script>
+// 登录检查
+if (!sessionStorage.getItem('loggedIn')) {
+  window.location.href = 'login.html';
+}
+</script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { 
@@ -169,6 +176,8 @@ body {
 </style>
 </head>
 <body>
+
+<script src="theme.js"></script>
 <div class="container">
   <div class="header">
     <h1>访问日志管理</h1>
