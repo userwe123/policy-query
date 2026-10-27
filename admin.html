@@ -273,6 +273,7 @@ function displayLogs(logs) {
         <tr>
           <th>用户名</th>
           <th>IP 地址</th>
+          <th>位置</th>
           <th>登录时间</th>
           <th>User-Agent</th>
         </tr>
@@ -288,6 +289,7 @@ function displayLogs(logs) {
       <tr>
         <td class="username">${log.username}</td>
         <td class="ip">${log.ip}</td>
+        <td class="location" id="loc-${log.ip.replace(/\./g, '-')}">查询中...</td>
         <td class="time">${time}</td>
         <td class="ua" title="${ua}">${ua}</td>
       </tr>
@@ -296,6 +298,44 @@ function displayLogs(logs) {
   
   html += '</tbody></table>';
   document.getElementById('logContent').innerHTML = html;
+  
+  // 查询所有 IP 的定位
+  queryAllIPLocations(logs);
+}
+
+// 查询所有 IP 的定位信息
+async function queryAllIPLocations(logs) {
+  const uniqueIPs = [...new Set(logs.map(log => log.ip))];
+  
+  for (const ip of uniqueIPs) {
+    try {
+      // 使用 ip-api.com 查询（免费，支持 CORS）
+      const response = await fetch(`http://ip-api.com/json/${ip}?lang=zh-CN`);
+      const data = await response.json();
+      
+      const locationCell = document.getElementById(`loc-${ip.replace(/\./g, '-')}`);
+      if (locationCell) {
+        if (data.status === 'success') {
+          const location = `${data.country} ${data.regionName} ${data.city}`;
+          locationCell.textContent = location;
+          locationCell.title = `${location}\n运营商: ${data.isp}\n坐标: ${data.lat}, ${data.lon}`;
+          locationCell.style.cursor = 'help';
+        } else {
+          locationCell.textContent = '查询失败';
+          locationCell.style.color = '#999';
+        }
+      }
+      
+      // 避免请求过快（免费 API 限制每分钟 45 次）
+      await new Promise(resolve => setTimeout(resolve, 1500));
+    } catch (e) {
+      const locationCell = document.getElementById(`loc-${ip.replace(/\./g, '-')}`);
+      if (locationCell) {
+        locationCell.textContent = '查询失败';
+        locationCell.style.color = '#f5222d';
+      }
+    }
+  }
 }
 
 // 更新统计
