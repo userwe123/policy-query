@@ -2,6 +2,77 @@ addEventListener('fetch', event => {
   event.respondWith(handleRequest(event.request));
 });
 
+// 国家名称中文映射
+const COUNTRY_MAP = {
+  'China': '中国',
+  'United States': '美国',
+  'United Kingdom': '英国',
+  'Japan': '日本',
+  'South Korea': '韩国',
+  'Germany': '德国',
+  'France': '法国',
+  'Canada': '加拿大',
+  'Australia': '澳大利亚',
+  'Russia': '俄罗斯',
+  'India': '印度',
+  'Brazil': '巴西',
+  'Singapore': '新加坡',
+  'Thailand': '泰国',
+  'Malaysia': '马来西亚',
+  'Indonesia': '印度尼西亚',
+  'Philippines': '菲律宾',
+  'Vietnam': '越南',
+  'Italy': '意大利',
+  'Spain': '西班牙',
+  'Netherlands': '荷兰',
+  'Switzerland': '瑞士',
+  'Sweden': '瑞典',
+  'Norway': '挪威',
+  'Denmark': '丹麦',
+  'Finland': '芬兰',
+  'Poland': '波兰',
+  'Turkey': '土耳其',
+  'Mexico': '墨西哥',
+  'Argentina': '阿根廷'
+};
+
+// 省份名称中文映射（部分）
+const REGION_MAP = {
+  'Guangdong': '广东',
+  'Beijing': '北京',
+  'Shanghai': '上海',
+  'Tianjin': '天津',
+  'Chongqing': '重庆',
+  'Hebei': '河北',
+  'Shanxi': '山西',
+  'Liaoning': '辽宁',
+  'Jilin': '吉林',
+  'Heilongjiang': '黑龙江',
+  'Jiangsu': '江苏',
+  'Zhejiang': '浙江',
+  'Anhui': '安徽',
+  'Fujian': '福建',
+  'Jiangxi': '江西',
+  'Shandong': '山东',
+  'Henan': '河南',
+  'Hubei': '湖北',
+  'Hunan': '湖南',
+  'Sichuan': '四川',
+  'Guizhou': '贵州',
+  'Yunnan': '云南',
+  'Shaanxi': '陕西',
+  'Gansu': '甘肃',
+  'Qinghai': '青海',
+  'Taiwan': '台湾',
+  'Inner Mongolia': '内蒙古',
+  'Guangxi': '广西',
+  'Tibet': '西藏',
+  'Xinjiang': '新疆',
+  'Hainan': '海南',
+  'Hong Kong': '香港',
+  'Macau': '澳门'
+};
+
 async function handleRequest(request) {
   const url = new URL(request.url);
   const path = url.pathname;
@@ -28,7 +99,7 @@ async function handleRequest(request) {
     }
     
     try {
-      // 使用多个 API 源，依次尝试
+      // 使用多个 API 源，依次尝试（优先使用返回中文数据的 API）
       const apis = [
         `https://ipapi.co/${ip}/json/`,
         `https://ip.sb/geoip/${ip}`,
@@ -60,8 +131,8 @@ async function handleRequest(request) {
             
             // ipapi.co 格式（优先使用，数据最完整）
             if (data.country_name !== undefined) {
-              result.country = data.country_name || '';
-              result.region = data.region || '';
+              result.country = COUNTRY_MAP[data.country_name] || data.country_name || '';
+              result.region = REGION_MAP[data.region] || data.region || '';
               result.city = data.city || '';
               result.isp = data.org || '';
               result.latitude = data.latitude || '';
@@ -69,8 +140,8 @@ async function handleRequest(request) {
             }
             // ip.sb 格式
             else if (data.country !== undefined) {
-              result.country = data.country || '';
-              result.region = data.region || '';
+              result.country = COUNTRY_MAP[data.country] || data.country || '';
+              result.region = REGION_MAP[data.region] || data.region || '';
               result.city = data.city || '';
               result.isp = data.isp || '';
               result.latitude = data.latitude || '';
@@ -78,8 +149,8 @@ async function handleRequest(request) {
             }
             // ipinfo.io 格式
             else if (data.country !== undefined && data.city !== undefined) {
-              result.country = data.country || '';
-              result.region = data.region || '';
+              result.country = COUNTRY_MAP[data.country] || data.country || '';
+              result.region = REGION_MAP[data.region] || data.region || '';
               result.city = data.city || '';
               result.isp = data.org || '';
               const loc = data.loc ? data.loc.split(',') : [];
