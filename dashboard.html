@@ -14,6 +14,14 @@ if (!sessionStorage.getItem('loggedIn')) {
 </script>
 <style>
 /* 页面特定样式 */
+.header-back-btn {
+  position: absolute !important;
+  top: 24px !important;
+  right: 24px !important;
+  z-index: 10 !important;
+}
+
+/* 页面特定样式 */
 .charts-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
@@ -178,7 +186,7 @@ if (!sessionStorage.getItem('loggedIn')) {
   <div class="header">
     <h1>📊 数据看板</h1>
     <p>保单数据统计与分析</p>
-    <a href="index.html" class="btn btn-ghost" style="position:absolute;top:24px;right:24px;">← 返回查询</a>
+    <a href="index.html" class="btn btn-ghost header-back-btn">← 返回查询</a>
   </div>
   
   <div class="stats-grid" id="statsGrid">
