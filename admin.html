@@ -205,19 +205,28 @@ body {
 </div>
 
 <script>
+// 调试信息
+console.log('检查登录状态...');
+console.log('loggedIn:', sessionStorage.getItem('loggedIn'));
+console.log('username:', sessionStorage.getItem('username'));
+
 // 检查登录状态
 if (!sessionStorage.getItem('loggedIn')) {
-  alert('请先登录');
+  alert('请先登录\n\n当前状态：未登录');
   window.location.href = 'login.html';
 }
 
 // 检查是否为管理员
 const currentUser = sessionStorage.getItem('username');
+console.log('当前用户:', currentUser);
+
 if (currentUser !== 'zhangdp' && currentUser !== 'admin') {
-  alert('您没有权限访问此页面，请使用管理员账号登录');
+  alert(`您没有权限访问此页面\n\n当前登录账号：${currentUser}\n管理员账号：zhangdp 或 admin\n\n请使用管理员账号重新登录`);
   sessionStorage.clear();
   window.location.href = 'login.html';
 }
+
+console.log('权限检查通过，允许访问');
 
 // 日志记录 API
 const LOG_API_URL = '/api';
