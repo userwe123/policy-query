@@ -4,8 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>数据管理 - 保单查询系统</title>
+<link rel="stylesheet" href="styles.css">
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+<script>
+// 登录检查
+if (!sessionStorage.getItem('loggedIn')) {
+  window.location.href = 'login.html';
+}
+</script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { 
@@ -290,6 +297,8 @@ body {
 </style>
 </head>
 <body>
+
+<script src="theme.js"></script>
 <div class="container">
   <div class="header">
     <h1>数据管理</h1>
@@ -474,8 +483,35 @@ function switchTab(tab) {
 // 加载数据统计
 async function loadStats() {
   try {
-    const resp = await fetch(API_URL + '/list');
-    const data = await resp.json();
+    // 优先使用预加载的数据
+    const preloadedData = sessionStorage.getItem('preloadedData');
+    const preloadedTime = sessionStorage.getItem('preloadedTime');
+    
+    let data;
+    if (preloadedData && preloadedTime) {
+      const age = Date.now() - parseInt(preloadedTime);
+      // 如果预加载数据在5分钟内，直接使用
+      if (age < 5 * 60 * 1000) {
+        const preloaded = JSON.parse(preloadedData);
+        data = {
+          success: true,
+          data: preloaded,
+          vehicles: new Set(preloaded.map(p => p.vin)).size,
+          policies: preloaded.length
+        };
+        console.log('✓ 使用预加载数据');
+      } else {
+        // 否则从API加载
+        const resp = await fetch(API_URL + '/list');
+        data = await resp.json();
+        console.log('✓ 从API加载数据');
+      }
+    } else {
+      // 没有预加载数据，从API加载
+      const resp = await fetch(API_URL + '/list');
+      data = await resp.json();
+      console.log('✓ 首次加载数据');
+    }
     
     if (data.success) {
       document.getElementById('vehicleCount').textContent = data.vehicles;
