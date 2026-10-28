@@ -17,12 +17,34 @@ if (!sessionStorage.getItem('loggedIn')) {
 .header {
   position: relative;
   z-index: 1;
+  padding: var(--spacing-xl);
+}
+
+.header-title {
+  margin-bottom: var(--spacing-md);
+}
+
+.header-title h1 {
+  font-size: var(--font-size-2xl);
+  font-weight: 600;
+  margin-bottom: var(--spacing-sm);
+  color: white;
+}
+
+.header-title p {
+  font-size: var(--font-size-base);
+  opacity: 0.95;
+  color: white;
+}
+
+.header-user {
+  margin-bottom: var(--spacing-md);
 }
 
 .user-badge {
-  position: absolute !important;
-  top: 24px !important;
-  left: 24px !important;
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
   z-index: 10;
   background: rgba(255,255,255,0.2) !important;
   padding: 6px 16px !important;
@@ -31,21 +53,30 @@ if (!sessionStorage.getItem('loggedIn')) {
   border: 1px solid rgba(255,255,255,0.4) !important;
   color: white !important;
   white-space: nowrap;
+  display: inline-block;
+  margin-bottom: var(--spacing-sm);
 }
 
 .header-actions {
-  position: absolute !important;
-  top: 24px !important;
-  right: 24px !important;
+  position: relative !important;
+  top: auto !important;
+  right: auto !important;
   z-index: 10;
   display: flex;
   gap: var(--spacing-sm);
+  flex-wrap: wrap;
+  margin-top: var(--spacing-sm);
 }
 
 .header-actions .btn {
   position: relative;
   z-index: 10;
   pointer-events: auto;
+  flex: 1;
+  min-width: 100px;
+  justify-content: center;
+  font-size: var(--font-size-sm) !important;
+  padding: 8px 12px !important;
 }
 
 .search-card {
@@ -289,6 +320,34 @@ if (!sessionStorage.getItem('loggedIn')) {
 }
 
 @media (max-width: 768px) {
+  .header {
+    padding: var(--spacing-lg) var(--spacing-md);
+  }
+  
+  .header-title h1 {
+    font-size: var(--font-size-xl);
+  }
+  
+  .header-title p {
+    font-size: var(--font-size-sm);
+  }
+  
+  .header-actions {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+  
+  .header-actions .btn {
+    width: 100%;
+    font-size: var(--font-size-base) !important;
+    padding: 12px !important;
+  }
+  
+  .user-badge {
+    font-size: var(--font-size-xs) !important;
+    padding: 4px 12px !important;
+  }
+  
   .search-row {
     flex-direction: column;
   }
@@ -335,9 +394,13 @@ if (!sessionStorage.getItem('loggedIn')) {
 
 <div class="container">
   <div class="header">
-    <h1>🔍 保单查询</h1>
-    <p>输入车牌号或车架号，快速查询交强险与商业险信息</p>
-    <div class="user-badge" id="userBadge"></div>
+    <div class="header-title">
+      <h1> 保单查询</h1>
+      <p>输入车牌号或车架号，快速查询交强险与商业险信息</p>
+    </div>
+    <div class="header-user">
+      <div class="user-badge" id="userBadge"></div>
+    </div>
     <div class="header-actions">
       <button onclick="goToDashboard()" class="btn btn-ghost"> 数据看板</button>
       <button onclick="goToAdmin()" id="adminBtn" class="btn btn-ghost" style="display:none;">访问管理</button>

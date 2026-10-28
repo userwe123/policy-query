@@ -14,10 +14,41 @@ if (!sessionStorage.getItem('loggedIn')) {
 </script>
 <style>
 /* 页面特定样式 */
+.header {
+  position: relative;
+  z-index: 1;
+  padding: var(--spacing-xl);
+}
+
+.header-title {
+  margin-bottom: var(--spacing-md);
+}
+
+.header-title h1 {
+  font-size: var(--font-size-2xl);
+  font-weight: 600;
+  margin-bottom: var(--spacing-sm);
+  color: white;
+}
+
+.header-title p {
+  font-size: var(--font-size-base);
+  opacity: 0.95;
+  color: white;
+}
+
+.header-actions {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
 .header-back-btn {
-  position: absolute !important;
-  top: 24px !important;
-  right: 24px !important;
+  position: relative !important;
+  top: auto !important;
+  right: auto !important;
   z-index: 10 !important;
 }
 
@@ -163,6 +194,27 @@ if (!sessionStorage.getItem('loggedIn')) {
 }
 
 @media (max-width: 768px) {
+  .header {
+    padding: var(--spacing-lg) var(--spacing-md);
+  }
+  
+  .header-title h1 {
+    font-size: var(--font-size-xl);
+  }
+  
+  .header-title p {
+    font-size: var(--font-size-sm);
+  }
+  
+  .header-actions {
+    flex-direction: column;
+  }
+  
+  .header-back-btn {
+    width: 100%;
+    text-align: center;
+  }
+  
   .charts-grid {
     grid-template-columns: 1fr;
   }
@@ -184,9 +236,13 @@ if (!sessionStorage.getItem('loggedIn')) {
 
 <div class="container">
   <div class="header">
-    <h1>📊 数据看板</h1>
-    <p>保单数据统计与分析</p>
-    <a href="index.html" class="btn btn-ghost header-back-btn">← 返回查询</a>
+    <div class="header-title">
+      <h1>📊 数据看板</h1>
+      <p>保单数据统计与分析</p>
+    </div>
+    <div class="header-actions">
+      <a href="index.html" class="btn btn-ghost header-back-btn">← 返回查询</a>
+    </div>
   </div>
   
   <div class="stats-grid" id="statsGrid">
